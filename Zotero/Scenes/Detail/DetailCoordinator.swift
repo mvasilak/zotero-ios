@@ -117,6 +117,7 @@ final class DetailCoordinator: Coordinator {
             syncScheduler: userControllers.syncScheduler,
             citationController: userControllers.citationController,
             fileCleanupController: userControllers.fileCleanupController,
+            openItemsController: userControllers.openItemsController,
             itemsTagFilterDelegate: self.itemsTagFilterDelegate,
             htmlAttributedStringConverter: self.controllers.htmlAttributedStringConverter
         )
@@ -133,6 +134,7 @@ final class DetailCoordinator: Coordinator {
         syncScheduler: SynchronizationScheduler,
         citationController: CitationController,
         fileCleanupController: AttachmentFileCleanupController,
+        openItemsController: OpenItemsController,
         itemsTagFilterDelegate: ItemsTagFilterDelegate?,
         htmlAttributedStringConverter: HtmlAttributedStringConverter
     ) -> ItemsViewController {
@@ -151,7 +153,8 @@ final class DetailCoordinator: Coordinator {
             downloadBatchData: downloadBatchData,
             remoteDownloadBatchData: remoteDownloadBatchData,
             identifierLookupBatchData: identifierLookupBatchData,
-            error: nil
+            error: nil,
+            openItemsCount: openItemsController.items.count
         )
         let handler = ItemsActionHandler(
             dbStorage: dbStorage,
@@ -296,6 +299,7 @@ final class DetailCoordinator: Coordinator {
     
     private func showPdf(at url: URL, key: String, library: Library) {
         let controller = createPDFController(key: key, library: library, url: url)
+        controllers.userControllers?.openItemsController.open(.pdf(library: library, key: key, url: url))
         navigationController?.present(controller, animated: true, completion: nil)
     }
     

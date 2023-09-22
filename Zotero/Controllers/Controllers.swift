@@ -310,6 +310,7 @@ final class UserControllers {
     let citationController: CitationController
     let webDavController: WebDavController
     let customUrlController: CustomURLController
+    let openItemsController: OpenItemsController
     private let isFirstLaunch: Bool
     private let lastBuildNumber: Int?
     private unowned let translatorsAndStylesController: TranslatorsAndStylesController
@@ -386,6 +387,7 @@ final class UserControllers {
         self.translatorsAndStylesController = controllers.translatorsAndStylesController
         self.idleTimerController = controllers.idleTimerController
         self.customUrlController = CustomURLController(dbStorage: dbStorage, fileStorage: controllers.fileStorage)
+        openItemsController = OpenItemsController()
         self.lastBuildNumber = controllers.lastBuildNumber
         self.disposeBag = DisposeBag()
     }
