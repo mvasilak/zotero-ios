@@ -167,7 +167,7 @@ final class DetailCoordinator: Coordinator {
             syncScheduler: syncScheduler,
             htmlAttributedStringConverter: htmlAttributedStringConverter
         )
-        let controller = ItemsViewController(viewModel: ViewModel(initialState: state, handler: handler), controllers: self.controllers, coordinatorDelegate: self)
+        let controller = ItemsViewController(viewModel: ViewModel(initialState: state, handler: handler), controllers: self.controllers, coordinatorDelegate: self, presenter: self)
         controller.tagFilterDelegate = itemsTagFilterDelegate
         itemsTagFilterDelegate?.delegate = controller
         return controller
@@ -193,7 +193,7 @@ final class DetailCoordinator: Coordinator {
             switch contentType {
             case "application/pdf":
                 DDLogInfo("DetailCoordinator: show PDF \(attachment.key)")
-                self.showPdf(at: url, key: attachment.key, library: library)
+                self.showPDF(at: url, key: attachment.key, library: library)
 
             case "text/html":
                 DDLogInfo("DetailCoordinator: show HTML \(attachment.key)")
@@ -299,7 +299,7 @@ final class DetailCoordinator: Coordinator {
     
     private func showPdf(at url: URL, key: String, library: Library) {
         let controller = createPDFController(key: key, library: library, url: url)
-        controllers.userControllers?.openItemsController.open(.pdf(library: library, key: key, url: url))
+        controllers.userControllers?.openItemsController.open(.pdf(library: library, key: key), in: collection)
         navigationController?.present(controller, animated: true, completion: nil)
     }
     
@@ -934,5 +934,20 @@ extension DetailCoordinator: DetailCitationCoordinatorDelegate {
         let controller = UIAlertController(title: L10n.error, message: errorMessage, preferredStyle: .alert)
         controller.addAction(UIAlertAction(title: L10n.ok, style: .cancel, handler: nil))
         self.citationNavigationController?.present(controller, animated: true, completion: nil)
+    }
+}
+
+extension DetailCoordinator: OpenItemsPresenter {
+    func showPDF(at url: URL, key: String, library: Library) {
+        guard let navigationController else { return }
+        let controller = createPDFController(key: key, library: library, url: url)
+        controllers.userControllers?.openItemsController.open(.pdf(library: library, key: key), in: collection)
+        if navigationController.presentingViewController != nil {
+            navigationController.dismiss(animated: false) {
+                navigationController.present(controller, animated: false)
+            }
+            return
+        }
+        navigationController.present(controller, animated: true)
     }
 }

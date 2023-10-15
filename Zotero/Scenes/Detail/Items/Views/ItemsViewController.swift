@@ -49,11 +49,18 @@ final class ItemsViewController: UIViewController {
     weak var tagFilterDelegate: ItemsTagFilterDelegate?
 
     private weak var coordinatorDelegate: (DetailItemsCoordinatorDelegate & DetailNoteEditorCoordinatorDelegate)?
+    private weak var presenter: OpenItemsPresenter?
 
-    init(viewModel: ViewModel<ItemsActionHandler>, controllers: Controllers, coordinatorDelegate: (DetailItemsCoordinatorDelegate & DetailNoteEditorCoordinatorDelegate)) {
+    init(
+        viewModel: ViewModel<ItemsActionHandler>,
+        controllers: Controllers,
+        coordinatorDelegate: (DetailItemsCoordinatorDelegate & DetailNoteEditorCoordinatorDelegate),
+        presenter: OpenItemsPresenter
+    ) {
         self.viewModel = viewModel
         self.controllers = controllers
         self.coordinatorDelegate = coordinatorDelegate
+        self.presenter = presenter
         self.disposeBag = DisposeBag()
 
         super.init(nibName: "ItemsViewController", bundle: nil)
@@ -646,9 +653,8 @@ final class ItemsViewController: UIViewController {
                 image = UIImage(systemName: "0.square")
                 accessibilityLabel = L10n.Items.restoreOpen
                 action = { [weak self] _ in
-                    // TODO: Add action that restores open items via coordinator or delegate
-                    guard let self else { return }
-                    print("Restore Open Items")
+                    guard let self, let presenter, let controller = controllers.userControllers?.openItemsController else { return }
+                    controller.restoreMostRecentlyOpenedItem(using: presenter)
                 }
             }
             
