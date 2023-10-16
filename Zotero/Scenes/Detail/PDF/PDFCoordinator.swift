@@ -77,7 +77,8 @@ final class PDFCoordinator: Coordinator {
         guard let dbStorage = self.controllers.userControllers?.dbStorage,
               let userId = self.controllers.sessionController.sessionData?.userId,
               !username.isEmpty,
-              let parentNavigationController = self.parentCoordinator?.navigationController
+              let parentNavigationController = self.parentCoordinator?.navigationController,
+              let openItemsController = controllers.userControllers?.openItemsController
         else { return }
 
         let settings = Defaults.shared.pdfSettings
@@ -105,7 +106,8 @@ final class PDFCoordinator: Coordinator {
         )
         let controller = PDFReaderViewController(
             viewModel: ViewModel(initialState: state, handler: handler),
-            compactSize: UIDevice.current.isCompactWidth(size: parentNavigationController.view.frame.size)
+            compactSize: UIDevice.current.isCompactWidth(size: parentNavigationController.view.frame.size),
+            openItemsController: openItemsController
         )
         controller.coordinatorDelegate = self
         handler.delegate = controller
