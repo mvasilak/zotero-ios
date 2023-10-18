@@ -89,7 +89,7 @@ class PDFReaderViewController: UIViewController {
     }
 
     private unowned let openItemsController: OpenItemsController
-    weak var coordinatorDelegate: (PdfReaderCoordinatorDelegate & PdfAnnotationsCoordinatorDelegate)?
+    weak var coordinatorDelegate: (PdfReaderCoordinatorDelegate & PdfAnnotationsCoordinatorDelegate & OpenItemsPresenter)?
 
     private lazy var shareButton: UIBarButtonItem = {
         let share = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: nil, action: nil)
@@ -106,6 +106,19 @@ class PDFReaderViewController: UIViewController {
              })
              .disposed(by: self.disposeBag)
         return share
+    }()
+    private lazy var openItemsButton: UIBarButtonItem = {
+        let openItems = UIBarButtonItem(image: UIImage(systemName: "0.square"), style: .plain, target: nil, action: nil)
+        openItems.isEnabled = true
+        openItems.accessibilityLabel = L10n.Accessibility.Pdf.openItems
+        openItems.title = L10n.Accessibility.Pdf.openItems
+        let deferredOpenItemsMenuElement = openItemsController.deferredOpenItemsMenuElement(disableOpenItem: true) { [weak self] item, _ in
+            guard let self, let coordinatorDelegate else { return }
+            openItemsController.restore(item, using: coordinatorDelegate)
+        }
+        let openItemsMenu = UIMenu(title: "Open Items", options: [.displayInline], children: [deferredOpenItemsMenuElement])
+        openItems.menu = UIMenu(children: [openItemsMenu])
+        return openItems
     }()
     private lazy var settingsButton: UIBarButtonItem = {
         let settings = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: nil, action: nil)
@@ -1229,6 +1242,10 @@ class PDFReaderViewController: UIViewController {
 
     private var rightBarButtonItems: [UIBarButtonItem] {
         var buttons = [settingsButton, shareButton, searchButton]
+        if openItemsController.items.count > 1 {
+            buttons.insert(openItemsButton, at: 1)
+            openItemsButton.image = .init(systemName: "\(openItemsController.items.count).square")
+        }
 
         if self.viewModel.state.library.metadataEditable {
             buttons.append(self.toolbarButton)
