@@ -297,7 +297,22 @@ final class DetailCoordinator: Coordinator {
 
         return navigationController
     }
-    
+
+    private func showPDF(at url: URL, key: String, library: Library) {
+        guard let navigationController else { return }
+        controllers.userControllers?.openItemsController.open(.pdf(libraryId: library.identifier, key: key))
+
+        let viewControllerProvider: () -> UIViewController = {
+            self.createPDFController(key: key, library: library, url: url)
+        }
+        if let presentedViewController = navigationController.presentedViewController {
+            guard let window = presentedViewController.view.window else { return }
+            show(viewControllerProvider: viewControllerProvider, by: navigationController, in: window, animated: false)
+            return
+        }
+        navigationController.present(viewControllerProvider(), animated: true)
+    }
+
     private func showWebView(for url: URL) {
         guard let currentNavigationController = self.navigationController else { return }
         let controller = WebViewController(url: url)
@@ -933,19 +948,11 @@ extension DetailCoordinator: DetailCitationCoordinatorDelegate {
 }
 
 extension DetailCoordinator: OpenItemsPresenter {
-    func showPDF(at url: URL, key: String, library: Library) {
-        guard let navigationController else { return }
-        controllers.userControllers?.openItemsController.open(.pdf(libraryId: library.identifier, key: key))
-
-        let viewControllerProvider: () -> UIViewController = {
-            self.createPDFController(key: key, library: library, url: url)
+    func showItem(with presentation: ItemPresentation) {
+        switch presentation {
+        case .pdf(let library, let key, let url):
+            showPDF(at: url, key: key, library: library)
         }
-        if let presentedViewController = navigationController.presentedViewController {
-            guard let window = presentedViewController.view.window else { return }
-            show(viewControllerProvider: viewControllerProvider, by: navigationController, in: window, animated: false)
-            return
-        }
-        navigationController.present(viewControllerProvider(), animated: true)
     }
 }
 
