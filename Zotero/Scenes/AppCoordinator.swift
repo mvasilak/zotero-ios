@@ -186,7 +186,7 @@ extension AppCoordinator: AppDelegateCoordinatorDelegate {
             func showRestoredState(for data: RestoredStateData) {
                 guard let openItemsController = controllers.userControllers?.openItemsController else { return }
                 DDLogInfo("AppCoordinator: show restored state")
-                guard let mainController = self.window?.rootViewController as? MainViewController else {
+                guard let mainController = window.rootViewController as? MainViewController else {
                     DDLogWarn("AppCoordinator: show restored state aborted - invalid root view controller")
                     return
                 }
@@ -208,7 +208,7 @@ extension AppCoordinator: AppDelegateCoordinatorDelegate {
                 openItemsController.restoreMostRecentlyOpenedItem(using: self)
 
                 func loadRestoredStateData(libraryId: LibraryIdentifier, collectionId: CollectionIdentifier) -> (Library, Collection?)? {
-                    guard let dbStorage = self.controllers.userControllers?.dbStorage else { return nil }
+                    guard let dbStorage = controllers.userControllers?.dbStorage else { return nil }
 
                     var library: Library?
                     var collection: Collection?
