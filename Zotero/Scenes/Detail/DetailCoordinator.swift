@@ -85,17 +85,27 @@ final class DetailCoordinator: Coordinator {
     let collection: Collection
     let library: Library
     let searchItemKeys: [String]?
+    let sessionIdentifier: String
     private unowned let controllers: Controllers
     private let disposeBag: DisposeBag
 
     private weak var citationNavigationController: UINavigationController?
 
-    init(library: Library, collection: Collection, searchItemKeys: [String]?, navigationController: UINavigationController, itemsTagFilterDelegate: ItemsTagFilterDelegate?, controllers: Controllers) {
+    init(
+        library: Library,
+        collection: Collection,
+        searchItemKeys: [String]?,
+        navigationController: UINavigationController,
+        itemsTagFilterDelegate: ItemsTagFilterDelegate?,
+        sessionIdentifier: String,
+        controllers: Controllers
+    ) {
         self.library = library
         self.collection = collection
         self.searchItemKeys = searchItemKeys
         self.navigationController = navigationController
         self.itemsTagFilterDelegate = itemsTagFilterDelegate
+        self.sessionIdentifier = sessionIdentifier
         self.controllers = controllers
         self.childCoordinators = []
         self.disposeBag = DisposeBag()
@@ -155,7 +165,7 @@ final class DetailCoordinator: Coordinator {
             remoteDownloadBatchData: remoteDownloadBatchData,
             identifierLookupBatchData: identifierLookupBatchData,
             error: nil,
-            openItemsCount: openItemsController.items.count
+            openItemsCount: openItemsController.getItems(for: sessionIdentifier).count
         )
         let handler = ItemsActionHandler(
             dbStorage: dbStorage,
@@ -300,7 +310,7 @@ final class DetailCoordinator: Coordinator {
 
     private func showPDF(at url: URL, key: String, library: Library) {
         guard let navigationController else { return }
-        controllers.userControllers?.openItemsController.open(.pdf(libraryId: library.identifier, key: key))
+        controllers.userControllers?.openItemsController.open(.pdf(libraryId: library.identifier, key: key), for: sessionIdentifier)
 
         let viewControllerProvider: () -> UIViewController = {
             self.createPDFController(key: key, library: library, url: url)
@@ -471,6 +481,7 @@ extension DetailCoordinator: DetailItemsCoordinatorDelegate {
             title: title,
             saveCallback: saveCallback,
             navigationController: navigationController,
+            sessionIdentifier: sessionIdentifier,
             controllers: controllers
         )
         coordinator.parentCoordinator = self
@@ -921,7 +932,9 @@ extension DetailCoordinator: DetailNoteEditorCoordinatorDelegate {
                 switch result {
                 case .success(let note):
                     // If indeed a new note is created inform open items controller about it.
-                    self?.controllers.userControllers?.openItemsController.open(.note(libraryId: library.identifier, key: note.key))
+                    if let self {
+                        controllers.userControllers?.openItemsController.open(.note(libraryId: library.identifier, key: note.key), for: sessionIdentifier)
+                    }
 
                 case .failure:
                     break
@@ -932,7 +945,7 @@ extension DetailCoordinator: DetailNoteEditorCoordinatorDelegate {
 
         case .edit(let key), .readOnly(let key):
             DDLogInfo("DetailCoordinator: show note \(key)")
-            controllers.userControllers?.openItemsController.open(.note(libraryId: library.identifier, key: key))
+            controllers.userControllers?.openItemsController.open(.note(libraryId: library.identifier, key: key), for: sessionIdentifier)
         }
 
         let viewControllerProvider: () -> UIViewController = {
