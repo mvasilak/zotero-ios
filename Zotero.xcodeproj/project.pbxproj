@@ -4289,7 +4289,7 @@
 				B3CF8840266E0FE6009CFC20 /* Run Script */,
 				B3593F142668D37900FA4BB2 /* Run Script */,
 				B34A85AC243CB1E4003D5638 /* ShellScript */,
-				B3052A912C412E12008C8596 /* ShellScript */,
+				B3052A912C412E12008C8596 /* Bundle Reader */,
 				B337A5AD244F229400AFD13D /* SwiftGen */,
 				B30D59512206F60400884C4A /* Sources */,
 				B30D59522206F60400884C4A /* Frameworks */,
@@ -4624,7 +4624,7 @@
 			shellPath = /bin/sh;
 			shellScript = "swiftlint\n";
 		};
-		B3052A912C412E12008C8596 /* ShellScript */ = {
+		B3052A912C412E12008C8596 /* Bundle Reader */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -4634,6 +4634,7 @@
 			inputPaths = (
 				"$(SRCROOT)/scripts/bundle_reader.sh",
 			);
+			name = "Bundle Reader";
 			outputFileListPaths = (
 			);
 			outputPaths = (
