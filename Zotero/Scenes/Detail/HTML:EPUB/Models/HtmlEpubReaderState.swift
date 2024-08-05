@@ -34,7 +34,7 @@ struct HtmlEpubReaderState: ViewModelState {
         }
 
         let type: String
-        let buffer: String
+        let url: URL
         let annotationsJson: String
         let page: Page?
     }

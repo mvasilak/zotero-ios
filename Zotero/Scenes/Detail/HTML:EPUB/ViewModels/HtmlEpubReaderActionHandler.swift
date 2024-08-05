@@ -552,12 +552,6 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
 
     private func load(in viewModel: ViewModel<HtmlEpubReaderActionHandler>) {
         do {
-            let data = try Data(contentsOf: viewModel.state.url)
-            let jsArrayData = try JSONSerialization.data(withJSONObject: [UInt8](data))
-            guard let jsArrayString = String(data: jsArrayData, encoding: .utf8) else {
-                DDLogError("HtmlEpubReaderActionHandler: can't convert data to string")
-                return
-            }
             let (sortedKeys, annotations, json, token, rawPage) = loadAnnotationsAndJson(in: viewModel)
             let type: String
             let page: HtmlEpubReaderState.DocumentData.Page?
@@ -580,7 +574,7 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 throw HtmlEpubReaderState.Error.incompatibleDocument
             }
 
-            let documentData = HtmlEpubReaderState.DocumentData(type: type, buffer: jsArrayString, annotationsJson: json, page: page)
+            let documentData = HtmlEpubReaderState.DocumentData(type: type, url: viewModel.state.url, annotationsJson: json, page: page)
             update(viewModel: viewModel) { state in
                 state.sortedKeys = sortedKeys
                 state.annotations = annotations

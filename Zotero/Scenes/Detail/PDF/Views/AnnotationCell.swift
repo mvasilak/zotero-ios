@@ -102,6 +102,8 @@ final class AnnotationCell: UITableViewCell {
         let availableWidth = availableWidth - (PDFReaderLayout.annotationLayout.horizontalInset * 2)
         annotationView.setup(
             with: annotation,
+            // TODO: Temporary, rebase on master and fix
+            text: nil,
             comment: comment,
             selected: selected,
             availableWidth: availableWidth,

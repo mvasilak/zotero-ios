@@ -57,7 +57,9 @@ class HtmlEpubDocumentViewController: UIViewController {
         }
 
         func setupWebView() {
-            let webView = WKWebView()
+            let configuration = WKWebViewConfiguration()
+            configuration.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+            let webView = WKWebView(frame: .zero, configuration: configuration)
             webView.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(webView)
 
@@ -79,7 +81,9 @@ class HtmlEpubDocumentViewController: UIViewController {
                 DDLogError("HtmlEpubDocumentViewController: can't load reader view.html")
                 return
             }
-            webViewHandler.load(fileUrl: readerUrl).subscribe().disposed(by: disposeBag)
+            let readAccessURL = readerUrl
+                .deletingLastPathComponent()
+            webViewHandler.load(fileUrl: readerUrl, allowingReadAccessTo: readAccessURL).subscribe().disposed(by: disposeBag)
         }
     }
 
@@ -166,7 +170,7 @@ class HtmlEpubDocumentViewController: UIViewController {
 
         func load(documentData data: HtmlEpubReaderState.DocumentData) {
             DDLogInfo("HtmlEpubDocumentViewController: try creating view for \(data.type); page = \(String(describing: data.page))")
-            var javascript = "createView({ type: '\(data.type)', buf: \(data.buffer), annotations: \(data.annotationsJson)"
+            var javascript = "createView({ type: '\(data.type)', url: '\(data.url)', annotations: \(data.annotationsJson)"
             if let page = data.page {
                 switch page {
                 case .html(let scrollYPercent):
