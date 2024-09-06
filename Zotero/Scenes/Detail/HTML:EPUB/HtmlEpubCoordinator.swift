@@ -22,14 +22,6 @@ protocol HtmlEpubSidebarCoordinatorDelegate: ReaderSidebarCoordinatorDelegate {
         popoverDelegate: UIPopoverPresentationControllerDelegate,
         userInterfaceStyle: UIUserInterfaceStyle
     ) -> PublishSubject<AnnotationPopoverState>?
-    func showFilterPopup(
-        from barButton: UIBarButtonItem,
-        filter: AnnotationsFilter?,
-        availableColors: [String],
-        availableTags: [Tag],
-        userInterfaceStyle: UIUserInterfaceStyle,
-        completed: @escaping (AnnotationsFilter?) -> Void
-    )
     func showSettings(with settings: HtmlEpubSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler>
 }
 
@@ -221,39 +213,6 @@ extension HtmlEpubCoordinator: HtmlEpubSidebarCoordinatorDelegate {
         currentNavigationController.present(navigationController, animated: true, completion: nil)
 
         return coordinator.viewModelObservable
-    }
-
-    func showFilterPopup(
-        from barButton: UIBarButtonItem,
-        filter: AnnotationsFilter?,
-        availableColors: [String],
-        availableTags: [Tag],
-        userInterfaceStyle: UIUserInterfaceStyle,
-        completed: @escaping (AnnotationsFilter?) -> Void
-    ) {
-        DDLogInfo("HtmlEpubCoordinator: show annotations filter popup")
-
-        let navigationController = NavigationViewController()
-        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
-        let coordinator = AnnotationsFilterPopoverCoordinator(
-            initialFilter: filter,
-            availableColors: availableColors,
-            availableTags: availableTags,
-            navigationController: navigationController,
-            controllers: controllers,
-            completionHandler: completed
-        )
-        coordinator.parentCoordinator = self
-        childCoordinators.append(coordinator)
-        coordinator.start(animated: false)
-
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            navigationController.modalPresentationStyle = .popover
-            navigationController.popoverPresentationController?.barButtonItem = barButton
-            navigationController.popoverPresentationController?.permittedArrowDirections = .down
-        }
-
-        self.navigationController?.present(navigationController, animated: true, completion: nil)
     }
 
     func showSettings(with settings: HtmlEpubSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler> {
