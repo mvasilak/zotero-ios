@@ -334,7 +334,7 @@ class HtmlEpubReaderViewController: UIViewController, ParentWithSidebarControlle
         func showPopover(forKey key: String, rect: CGRect) {
             guard !isSidebarVisible else { return }
             let observable = coordinatorDelegate?.showAnnotationPopover(
-                viewModel: viewModel,
+                state: viewModel.state,
                 sourceRect: rect,
                 popoverDelegate: self,
                 userInterfaceStyle: viewModel.state.settings.appearance.userInterfaceStyle
