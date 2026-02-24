@@ -18,6 +18,7 @@ typealias AnnotationsViewControllerAction = (AnnotationView.Action, Annotation, 
 final class PDFAnnotationsViewController: UIViewController {
     private static let cellId = "AnnotationCell"
     private let viewModel: ViewModel<PDFReaderActionHandler>
+    private let previewHandler: PDFAnnotationsPreviewHandler
     private let updateQueue: DispatchQueue
     private let disposeBag: DisposeBag
 
@@ -39,8 +40,20 @@ final class PDFAnnotationsViewController: UIViewController {
 
     // MARK: - Lifecycle
 
-    init(viewModel: ViewModel<PDFReaderActionHandler>) {
+    init(
+        viewModel: ViewModel<PDFReaderActionHandler>,
+        annotationProvider: PDFReaderAnnotationProvider?,
+        annotationPreviewController: AnnotationPreviewController,
+        initialAppearance: Appearance
+    ) {
         self.viewModel = viewModel
+        previewHandler = PDFAnnotationsPreviewHandler(
+            annotationPreviewController: annotationPreviewController,
+            annotationProvider: annotationProvider,
+            attachmentKey: viewModel.state.key,
+            libraryId: viewModel.state.library.identifier,
+            appearance: initialAppearance
+        )
         disposeBag = DisposeBag()
         updateQueue = DispatchQueue(label: "org.zotero.PDFAnnotationsViewController.UpdateQueue")
         super.init(nibName: nil, bundle: nil)
@@ -59,6 +72,9 @@ final class PDFAnnotationsViewController: UIViewController {
         setupDataSource()
         setupSearchController()
         setupKeyboardObserving()
+        previewHandler.previewsDidLoad = { [weak self] keys in
+            self?.updatePreviewsIfVisible(for: keys)
+        }
     }
 
     override func viewIsAppearing(_ animated: Bool) {
@@ -80,7 +96,7 @@ final class PDFAnnotationsViewController: UIViewController {
                 self?.update(state: state)
             })
             .disposed(by: disposeBag)
-        viewModel.process(action: .startObservingAnnotationPreviewChanges)
+        previewHandler.startObserving()
     }
 
     deinit {
@@ -188,6 +204,9 @@ final class PDFAnnotationsViewController: UIViewController {
     }
 
     private func update(state: PDFReaderState) {
+        if state.changes.contains(.appearance) {
+            previewHandler.setAppearance(.from(appearanceMode: state.settings.appearanceMode, interfaceStyle: state.interfaceStyle))
+        }
         if state.changes.contains(.annotations) {
             tableView.isHidden = (state.snapshotKeys ?? state.sortedKeys).isEmpty
             toolbarContainer.isHidden = tableView.isHidden
@@ -197,10 +216,6 @@ final class PDFAnnotationsViewController: UIViewController {
         let isVisible = parentDelegate?.isSidebarVisible ?? false
         reloadIfNeeded(for: state, isVisible: isVisible) { [weak self] in
             guard let self else { return }
-
-            if let keys = state.loadedPreviewImageAnnotationKeys {
-                updatePreviewsIfVisible(state: state, tableView: tableView, for: keys)
-            }
 
             if let key = state.focusSidebarKey, let indexPath = dataSource.indexPath(for: key) {
                 tableView.selectRow(at: indexPath, animated: isVisible, scrollPosition: .middle)
@@ -277,17 +292,12 @@ final class PDFAnnotationsViewController: UIViewController {
 
             completion()
         }
+    }
 
-        /// Updates `UIImage` of `SquareAnnotation` preview if the cell is currently on screen.
-        /// - parameter state: Current state.
-        /// - parameter tableView: Table view
-        /// - parameter keys: Set of keys to update.
-        func updatePreviewsIfVisible(state: PDFReaderState, tableView: UITableView, for keys: Set<String>) {
-            let cells = tableView.visibleCells.compactMap({ $0 as? AnnotationCell }).filter({ keys.contains($0.key) })
-            for cell in cells {
-                let image = state.previewCache.object(forKey: (cell.key as NSString))
-                cell.updatePreview(image: image)
-            }
+    private func updatePreviewsIfVisible(for keys: Set<String>) {
+        let cells = tableView.visibleCells.compactMap({ $0 as? AnnotationCell }).filter({ keys.contains($0.key) })
+        for cell in cells {
+            cell.updatePreview(image: previewHandler.image(for: cell.key))
         }
     }
 
@@ -367,9 +377,9 @@ final class PDFAnnotationsViewController: UIViewController {
         // Otherwise, reconfigured cells do not have their prepareForReuse method called, so observing is already set up.
 
         func loadPreview(for annotation: PDFAnnotation, state: PDFReaderState) -> UIImage? {
-            let preview = state.previewCache.object(forKey: (annotation.key as NSString))
+            let preview = previewHandler.image(for: annotation.key)
             if preview == nil {
-                viewModel.process(action: .requestPreviews(keys: [annotation.key], notify: true))
+                previewHandler.requestPreviews(keys: [annotation.key], notify: true)
             }
             return preview
         }
@@ -650,7 +660,7 @@ extension PDFAnnotationsViewController: UITableViewDelegate, UITableViewDataSour
                 }
             })
             .map({ $0.key })
-        viewModel.process(action: .requestPreviews(keys: keys, notify: false))
+        previewHandler.requestPreviews(keys: keys, notify: false)
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
