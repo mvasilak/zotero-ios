@@ -127,3 +127,41 @@ struct ReadCombinedAnnotationKeysDbRequest: DbResponseRequest {
         return (databaseAnnotationKeys + documentAnnotationKeys).sorted(by: { $0.sortIndex < $1.sortIndex })
     }
 }
+
+struct ReadFilteredCombinedAnnotationKeysDbRequest: DbResponseRequest {
+    typealias Response = Set<String>
+
+    let attachmentKey: String
+    let libraryId: LibraryIdentifier
+    let page: Int
+    let term: String?
+    let filter: AnnotationsFilter
+    let displayName: String
+    let username: String
+
+    var needsWrite: Bool { return false }
+
+    func process(in database: Realm) throws -> Set<String> {
+        var keys = Set<String>()
+
+        let databaseAnnotations = try ReadAnnotationsDbRequest(attachmentKey: attachmentKey, libraryId: libraryId, page: page)
+            .process(in: database)
+        for item in databaseAnnotations {
+            guard let annotation = PDFDatabaseAnnotation(item: item),
+                  annotation.matches(term: term, filter: filter, displayName: displayName, username: username)
+            else { continue }
+            keys.insert(annotation.key)
+        }
+
+        let documentAnnotations = try ReadDocumentAnnotationsDbRequest(attachmentKey: attachmentKey, libraryId: libraryId, page: page)
+            .process(in: database)
+        for cachedAnnotation in documentAnnotations {
+            guard let annotation = PDFDocumentAnnotation(annotation: cachedAnnotation, displayName: displayName, username: username),
+                  annotation.matches(term: term, filter: filter, displayName: displayName, username: username)
+            else { continue }
+            keys.insert(annotation.key)
+        }
+
+        return keys
+    }
+}

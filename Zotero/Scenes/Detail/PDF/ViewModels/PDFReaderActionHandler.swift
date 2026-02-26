@@ -494,6 +494,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
     private func set(page: Int, userActionFromDocument: Bool, fromThumbnailList: Bool, in viewModel: ViewModel<PDFReaderActionHandler>) {
         guard viewModel.state.visiblePage != page else { return }
+        annotationProvider?.setVisiblePage(PageIndex(page))
 
         update(viewModel: viewModel) { state in
             state.visiblePage = page
@@ -911,14 +912,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
     private func filterAnnotations(with term: String?, filter: AnnotationsFilter?, in viewModel: ViewModel<PDFReaderActionHandler>) {
         if term == nil && filter == nil {
             guard let snapshot = viewModel.state.snapshotKeys else { return }
-
-            for (_, annotations) in viewModel.state.document.allAnnotations(of: .all.subtracting([.link])) {
-                for annotation in annotations {
-                    guard annotation.isHidden else { continue }
-                    annotation.isHidden = false
-                    NotificationCenter.default.post(name: .PSPDFAnnotationChanged, object: annotation, userInfo: [PSPDFAnnotationChangedNotificationKeyPathKey: ["flags"]])
-                }
-            }
+            annotationProvider?.updateFilter(term: nil, filter: nil)
 
             update(viewModel: viewModel) { state in
                 state.snapshotKeys = nil
@@ -937,15 +931,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
         let snapshot = viewModel.state.snapshotKeys ?? viewModel.state.sortedKeys
         let filteredKeys = filteredKeys(from: snapshot, term: term, filter: filter, state: viewModel.state)
-
-        for (_, annotations) in viewModel.state.document.allAnnotations(of: .all.subtracting([.link])) {
-            for annotation in annotations {
-                let isHidden = !filteredKeys.contains(where: { $0.key == (annotation.key ?? annotation.uuid) })
-                guard isHidden != annotation.isHidden else { continue }
-                annotation.isHidden = isHidden
-                NotificationCenter.default.post(name: .PSPDFAnnotationChanged, object: annotation, userInfo: [PSPDFAnnotationChangedNotificationKeyPathKey: ["flags"]])
-            }
-        }
+        annotationProvider?.updateFilter(term: term, filter: filter)
 
         update(viewModel: viewModel) { state in
             if state.snapshotKeys == nil {
@@ -967,62 +953,10 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         if term == nil && filter == nil {
             return snapshot
         }
-        let selectedDefaultColors: Set<String>
-        let selectedExtraColors: Set<String>
-        if let filter, !filter.colors.isEmpty {
-            let defaultColors = Set(AnnotationsConfig.allColors)
-            selectedDefaultColors = filter.colors.intersection(defaultColors)
-            selectedExtraColors = filter.colors.subtracting(defaultColors)
-        } else {
-            selectedDefaultColors = []
-            selectedExtraColors = []
-        }
         return snapshot.filter({ key in
             guard let annotation = state.annotation(for: key) else { return false }
-            let hasTerm = filterAnnotation(annotation, with: term, displayName: state.displayName, username: state.username)
-            let hasFilter = (filter == nil) ? true : filterAnnotation(annotation, tags: filter?.tags ?? [], defaultColors: selectedDefaultColors, extraColors: selectedExtraColors)
-            return hasTerm && hasFilter
+            return annotation.matches(term: term, filter: filter, displayName: state.displayName, username: state.username)
         })
-
-        func filterAnnotation(_ annotation: PDFAnnotation, with term: String?, displayName: String, username: String) -> Bool {
-            guard let term else { return true }
-            return annotation.key.lowercased() == term.lowercased() ||
-                   annotation.author(displayName: displayName, username: username).localizedCaseInsensitiveContains(term) ||
-                   annotation.comment.localizedCaseInsensitiveContains(term) ||
-                   (annotation.text ?? "").localizedCaseInsensitiveContains(term) ||
-                   annotation.tags.contains(where: { $0.name.localizedCaseInsensitiveContains(term) })
-        }
-
-        func filterAnnotation(_ annotation: PDFAnnotation, tags: Set<String>, defaultColors: Set<String>, extraColors: Set<String>) -> Bool {
-            let hasTag: Bool
-            if tags.isEmpty {
-                // Filter doesn't contain any tags.
-                hasTag = true
-            } else if annotation.isSyncable {
-                // Database annotation filtered with tags.
-                hasTag = annotation.tags.contains(where: { tags.contains($0.name) })
-            } else {
-                // Document annotations don't have tags, return immediately false.
-                return false
-            }
-
-            let hasColor: Bool
-            if defaultColors.isEmpty && extraColors.isEmpty {
-                // Filter doesn't contain any colors.
-                hasColor = true
-            } else if !annotation.isSyncable {
-                // Document annotation is filtered with both default and extra colors.
-                hasColor = defaultColors.contains(annotation.color) || extraColors.contains(annotation.color)
-            } else if !defaultColors.isEmpty {
-                // Database annotation is filtered only with default colors.
-                hasColor = defaultColors.contains(annotation.color)
-            } else {
-                // Database annotation is filtered with extra colors, return immediately false.
-                return false
-            }
-
-            return hasTag && hasColor
-        }
     }
 
     /// Set selected annotation. Also sets `focusSidebarIndexPath` or `focusDocumentLocation` if needed.
@@ -1855,6 +1789,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                     state.focusSidebarKey = key
                 }
             }
+            annotationProvider?.setVisiblePage(PageIndex(page))
 
             DDLogInfo("PDFReaderActionHandler: loaded PDF with \(pageCount) pages, \(documentAnnotationKeys.count) document annotations, \(databaseAnnotationCount) zotero annotations")
             var timeLog = "PDFReaderActionHandler: total time \(endTime - startTime)"
@@ -2058,7 +1993,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                                 }
                                 handler.change(annotation: annotation, with: changes, in: viewModel)
                             }
-                        } else {
+                        } else if changes != ["flags"] {
+                            // Changes that only alter annotation flags, e.g. hidden or locked, are ignored, as those shouldn't affect neither database annotations, nor annotation previews.
                             handler.change(annotation: annotation, with: changes, in: viewModel)
                         }
                     } else if annotation is PSPDFKit.InkAnnotation, notification.userInfo?["com.pspdfkit.sourceDrawLayer"] != nil {
