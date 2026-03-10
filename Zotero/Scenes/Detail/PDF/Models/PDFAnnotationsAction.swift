@@ -1,0 +1,63 @@
+//
+//  PDFAnnotationsAction.swift
+//  Zotero
+//
+//  Created by Miltiadis Vasilakis on 10/03/2026.
+//  Copyright © 2026 Corporation for Digital Scholarship. All rights reserved.
+//
+
+import UIKit
+
+import RealmSwift
+
+enum PDFAnnotationsAction {
+    case setAnnotations(
+        sortedKeys: [PDFAnnotationsState.AnnotationKey],
+        annotationPages: IndexSet,
+        snapshotKeys: [PDFAnnotationsState.AnnotationKey]?,
+        updatedAnnotationKeys: [PDFAnnotationsState.AnnotationKey]?,
+        databaseAnnotations: Results<RItem>?,
+        documentAnnotations: Results<RDocumentAnnotation>?,
+        documentAnnotationUniqueBaseColors: [String]
+    )
+    case setSelection(
+        selectedAnnotationKey: PDFAnnotationsState.AnnotationKey?,
+        selectedAnnotationCommentActive: Bool,
+        focusSidebarKey: PDFAnnotationsState.AnnotationKey?,
+        updatedAnnotationKeys: [PDFAnnotationsState.AnnotationKey]?
+    )
+    case setCommentActive(Bool)
+    case setSidebarEditing(enabled: Bool)
+    case setSidebarEditingSelection(deletionEnabled: Bool, mergingEnabled: Bool)
+    case setFilter(AnnotationsFilter?)
+    case setLibrary(Library)
+    case setAppearance(settings: PDFSettings, interfaceStyle: UIUserInterfaceStyle)
+    case setSettings(PDFSettings)
+    case send(PDFAnnotationsOutputAction)
+}
+
+enum PDFAnnotationsOutputAction {
+    case setTags(key: String, tags: [Tag])
+    case updateAnnotationProperties(
+        key: String,
+        type: AnnotationType,
+        color: String,
+        lineWidth: CGFloat,
+        fontSize: CGFloat,
+        pageLabel: String,
+        updateSubsequentLabels: Bool,
+        highlightText: NSAttributedString,
+        higlightFont: UIFont
+    )
+    case removeAnnotation(PDFAnnotationsState.AnnotationKey)
+    case setComment(key: String, comment: NSAttributedString)
+    case setCommentActive(Bool)
+    case changeFilter(AnnotationsFilter?)
+    case searchAnnotations(String)
+    case mergeSelectedAnnotations
+    case removeSelectedAnnotations
+    case setSidebarEditingEnabled(Bool)
+    case selectAnnotationDuringEditing(PDFAnnotationsState.AnnotationKey)
+    case selectAnnotation(PDFAnnotationsState.AnnotationKey)
+    case deselectAnnotationDuringEditing(PDFAnnotationsState.AnnotationKey)
+}
