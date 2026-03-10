@@ -15,8 +15,6 @@ import RealmSwift
 typealias AnnotationDocumentLocation = (page: Int, boundingBox: CGRect)
 
 struct PDFReaderState: ViewModelState {
-    typealias AnnotationKey = PDFReaderAnnotationKey
-
     struct Changes: OptionSet {
         typealias RawValue = UInt32
 
@@ -122,14 +120,14 @@ struct PDFReaderState: ViewModelState {
 
     var library: Library
     var libraryToken: NotificationToken?
-    var sortedKeys: [AnnotationKey]
+    var sortedKeys: [PDFReaderAnnotationKey]
     var annotationPages: IndexSet
-    var snapshotKeys: [AnnotationKey]?
+    var snapshotKeys: [PDFReaderAnnotationKey]?
     var token: NotificationToken?
     var itemToken: NotificationToken?
     var databaseAnnotations: Results<RItem>!
     var documentAnnotations: Results<RDocumentAnnotation>!
-    var documentAnnotationKeys: [AnnotationKey]
+    var documentAnnotationKeys: [PDFReaderAnnotationKey]
     var documentAnnotationUniqueBaseColors: [String]
     var defaultAnnotationPageLabel: DefaultAnnotationPageLabel
     var texts: [String: (String, [UIFont: NSAttributedString])]
@@ -145,13 +143,13 @@ struct PDFReaderState: ViewModelState {
     var documentMD5Changed: Bool?
 
     /// Selected annotation when annotations are not being edited in sidebar
-    var selectedAnnotationKey: AnnotationKey?
+    var selectedAnnotationKey: PDFReaderAnnotationKey?
     var selectedAnnotation: PDFAnnotation? {
         return self.selectedAnnotationKey.flatMap({ self.annotation(for: $0) })
     }
     var selectedAnnotationCommentActive: Bool
     /// Selected annotations when annotations are being edited in sidebar
-    var selectedAnnotationsDuringEditing: Set<PDFReaderState.AnnotationKey>
+    var selectedAnnotationsDuringEditing: Set<PDFReaderAnnotationKey>
 
     var interfaceStyle: UIUserInterfaceStyle
     var sidebarEditingEnabled: Bool
@@ -167,9 +165,9 @@ struct PDFReaderState: ViewModelState {
     /// Location to focus in document
     var focusDocumentLocation: AnnotationDocumentLocation?
     /// Annotation key to focus in annotation sidebar
-    var focusSidebarKey: AnnotationKey?
+    var focusSidebarKey: PDFReaderAnnotationKey?
     /// Annotation keys in sidebar that need to reload (for example cell height)
-    var updatedAnnotationKeys: [AnnotationKey]?
+    var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     /// Page that should be shown initially, instead of stored page
     var initialPage: Int?
     /// Rects that should be highlighted initially, used by note editor to highlight original annotation position
@@ -213,7 +211,7 @@ struct PDFReaderState: ViewModelState {
         self.visiblePage = 0
         self.initialPage = initialPage
         self.settings = settings
-        self.selectedAnnotationKey = preselectedAnnotationKey.flatMap({ AnnotationKey(key: $0, type: .database) })
+        self.selectedAnnotationKey = preselectedAnnotationKey.flatMap({ PDFReaderAnnotationKey(key: $0, type: .database) })
         self.previewRects = previewRects
         self.changes = []
         self.selectedAnnotationCommentActive = false
@@ -243,7 +241,7 @@ struct PDFReaderState: ViewModelState {
         }
     }
 
-    func annotation(for key: AnnotationKey) -> PDFAnnotation? {
+    func annotation(for key: PDFReaderAnnotationKey) -> PDFAnnotation? {
         switch key.type {
         case .database:
             return databaseAnnotations.filter(.key(key.key)).first.flatMap({ PDFDatabaseAnnotation(item: $0) })
