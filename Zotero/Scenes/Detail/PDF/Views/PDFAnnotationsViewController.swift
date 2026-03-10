@@ -30,7 +30,7 @@ final class PDFAnnotationsViewController: UIViewController {
     private var tableViewToBottom: NSLayoutConstraint!
     private weak var deleteBarButton: UIBarButtonItem?
     private weak var mergeBarButton: UIBarButtonItem?
-    private var dataSource: TableViewDiffableDataSource<Int, PDFAnnotationsState.AnnotationKey>!
+    private var dataSource: TableViewDiffableDataSource<Int, PDFReaderAnnotationKey>!
     private var searchController: UISearchController!
     private var didAppear = false
 
@@ -114,7 +114,7 @@ final class PDFAnnotationsViewController: UIViewController {
 
     // MARK: - Actions
 
-    private func perform(action: AnnotationView.Action, annotationKey: PDFAnnotationsState.AnnotationKey) {
+    private func perform(action: AnnotationView.Action, annotationKey: PDFReaderAnnotationKey) {
         guard viewModel.state.library.metadataEditable, let annotation = viewModel.state.annotation(for: annotationKey) else { return }
 
         switch action {
@@ -195,13 +195,13 @@ final class PDFAnnotationsViewController: UIViewController {
             dataSource.apply(snapshot, animatingDifferences: animatedDifferences, completion: completion)
         }
 
-        func buildSnapshot(state: PDFAnnotationsState) -> NSDiffableDataSourceSnapshot<Int, PDFAnnotationsState.AnnotationKey> {
-            var itemsByPage: [Int: [PDFAnnotationsState.AnnotationKey]] = [:]
+        func buildSnapshot(state: PDFAnnotationsState) -> NSDiffableDataSourceSnapshot<Int, PDFReaderAnnotationKey> {
+            var itemsByPage: [Int: [PDFReaderAnnotationKey]] = [:]
             for key in state.sortedKeys {
                 guard let annotation = state.annotation(for: key) else { continue }
                 itemsByPage[annotation.page, default: []].append(key)
             }
-            var snapshot = NSDiffableDataSourceSnapshot<Int, PDFAnnotationsState.AnnotationKey>()
+            var snapshot = NSDiffableDataSourceSnapshot<Int, PDFReaderAnnotationKey>()
             for page in state.annotationPages {
                 if let items = itemsByPage[page], !items.isEmpty {
                     snapshot.appendSections([page])
