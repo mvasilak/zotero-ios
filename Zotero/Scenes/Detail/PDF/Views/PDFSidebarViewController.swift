@@ -117,8 +117,142 @@ class PDFSidebarViewController: UIViewController {
         ])
 
         func createAnnotationsController() -> PDFAnnotationsViewController {
+            let initialState = viewModel.state
+            let annotationsViewModel = ViewModel(
+                initialState: PDFAnnotationsState(
+                    key: initialState.key,
+                    document: initialState.document,
+                    userId: initialState.userId,
+                    username: initialState.username,
+                    library: initialState.library,
+                    settings: initialState.settings,
+                    interfaceStyle: initialState.interfaceStyle,
+                    sortedKeys: initialState.sortedKeys,
+                    annotationPages: initialState.annotationPages,
+                    snapshotKeys: initialState.snapshotKeys,
+                    updatedAnnotationKeys: initialState.updatedAnnotationKeys,
+                    selectedAnnotationKey: initialState.selectedAnnotationKey,
+                    selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
+                    focusSidebarKey: initialState.focusSidebarKey,
+                    sidebarEditingEnabled: initialState.sidebarEditingEnabled,
+                    deletionEnabled: initialState.deletionEnabled,
+                    mergingEnabled: initialState.mergingEnabled,
+                    filter: initialState.filter,
+                    databaseAnnotations: initialState.databaseAnnotations,
+                    documentAnnotations: initialState.documentAnnotations,
+                    documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
+                ),
+                handler: PDFAnnotationsActionHandler()
+            )
+            let disposeBag = DisposeBag()
+            controllerDisposeBag = disposeBag
+
+            viewModel
+                .stateObservable
+                .subscribe(onNext: { [weak annotationsViewModel] state in
+                    guard let annotationsViewModel else { return }
+                    if state.changes.contains(.annotations) {
+                        annotationsViewModel.process(action: .setAnnotations(
+                            sortedKeys: state.sortedKeys,
+                            annotationPages: state.annotationPages,
+                            snapshotKeys: state.snapshotKeys,
+                            updatedAnnotationKeys: state.updatedAnnotationKeys,
+                            databaseAnnotations: state.databaseAnnotations,
+                            documentAnnotations: state.documentAnnotations,
+                            documentAnnotationUniqueBaseColors: state.documentAnnotationUniqueBaseColors
+                        ))
+                    }
+                    if state.changes.contains(.selection) {
+                        annotationsViewModel.process(action: .setSelection(
+                            selectedAnnotationKey: state.selectedAnnotationKey,
+                            selectedAnnotationCommentActive: state.selectedAnnotationCommentActive,
+                            focusSidebarKey: state.focusSidebarKey,
+                            updatedAnnotationKeys: state.updatedAnnotationKeys
+                        ))
+                    }
+                    if state.changes.contains(.activeComment) {
+                        annotationsViewModel.process(action: .setCommentActive(state.selectedAnnotationCommentActive))
+                    }
+                    if state.changes.contains(.sidebarEditing) {
+                        annotationsViewModel.process(action: .setSidebarEditing(enabled: state.sidebarEditingEnabled))
+                    }
+                    if state.changes.contains(.sidebarEditingSelection) {
+                        annotationsViewModel.process(action: .setSidebarEditingSelection(deletionEnabled: state.deletionEnabled, mergingEnabled: state.mergingEnabled))
+                    }
+                    if state.changes.contains(.filter) {
+                        annotationsViewModel.process(action: .setFilter(state.filter))
+                    }
+                    if state.changes.contains(.library) {
+                        annotationsViewModel.process(action: .setLibrary(state.library))
+                    }
+                    if state.changes.contains(.appearance) {
+                        annotationsViewModel.process(action: .setAppearance(settings: state.settings, interfaceStyle: state.interfaceStyle))
+                    } else if state.changes.contains(.settings) {
+                        annotationsViewModel.process(action: .setSettings(state.settings))
+                    }
+                })
+                .disposed(by: disposeBag)
+
+            annotationsViewModel
+                .stateObservable
+                .subscribe(onNext: { [weak viewModel] state in
+                    guard let viewModel else { return }
+                    guard let action = state.outgoingAction else { return }
+                    switch action {
+                    case .setTags(let key, let tags):
+                        viewModel.process(action: .setTags(key: key, tags: tags))
+
+                    case .updateAnnotationProperties(let key, let type, let color, let lineWidth, let fontSize, let pageLabel, let updateSubsequentLabels, let highlightText, let higlightFont):
+                        viewModel.process(action: .updateAnnotationProperties(
+                            key: key,
+                            type: type,
+                            color: color,
+                            lineWidth: lineWidth,
+                            fontSize: fontSize,
+                            pageLabel: pageLabel,
+                            updateSubsequentLabels: updateSubsequentLabels,
+                            highlightText: highlightText,
+                            higlightFont: higlightFont
+                        ))
+
+                    case .removeAnnotation(let key):
+                        viewModel.process(action: .removeAnnotation(key))
+
+                    case .setComment(let key, let comment):
+                        viewModel.process(action: .setComment(key: key, comment: comment))
+
+                    case .setCommentActive(let isActive):
+                        viewModel.process(action: .setCommentActive(isActive))
+
+                    case .changeFilter(let filter):
+                        viewModel.process(action: .changeFilter(filter))
+
+                    case .searchAnnotations(let term):
+                        viewModel.process(action: .searchAnnotations(term))
+
+                    case .mergeSelectedAnnotations:
+                        viewModel.process(action: .mergeSelectedAnnotations)
+
+                    case .removeSelectedAnnotations:
+                        viewModel.process(action: .removeSelectedAnnotations)
+
+                    case .setSidebarEditingEnabled(let enabled):
+                        viewModel.process(action: .setSidebarEditingEnabled(enabled))
+
+                    case .selectAnnotationDuringEditing(let key):
+                        viewModel.process(action: .selectAnnotationDuringEditing(key))
+
+                    case .selectAnnotation(let key):
+                        viewModel.process(action: .selectAnnotation(key))
+
+                    case .deselectAnnotationDuringEditing(let key):
+                        viewModel.process(action: .deselectAnnotationDuringEditing(key))
+                    }
+                })
+                .disposed(by: disposeBag)
+
             let annotationsController = PDFAnnotationsViewController(
-                viewModel: viewModel,
+                viewModel: annotationsViewModel,
                 annotationProvider: viewModel.handler.annotationProvider,
                 annotationPreviewController: viewModel.handler.annotationPreviewController,
                 initialAppearance: viewModel.handler.appearance
@@ -168,9 +302,11 @@ class PDFSidebarViewController: UIViewController {
 
             thumbnailsViewModel
                 .stateObservable
-                .subscribe(with: viewModel, onNext: { viewModel, state in
-                    guard state.changes.contains(.selection) else { return }
-                    viewModel.process(action: .setVisiblePage(page: state.selectedPageIndex, userActionFromDocument: false, fromThumbnailList: true))
+                .subscribe(onNext: { [weak viewModel] state in
+                    guard let viewModel else { return }
+                    if state.changes.contains(.selection) {
+                        viewModel.process(action: .setVisiblePage(page: state.selectedPageIndex, userActionFromDocument: false, fromThumbnailList: true))
+                    }
                 })
                 .disposed(by: disposeBag)
 
