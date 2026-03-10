@@ -16,12 +16,12 @@ enum PDFReaderAction {
     case prepareDocumentProvider
     case loadDocumentData
     case searchAnnotations(String)
-    case selectAnnotation(PDFReaderState.AnnotationKey)
-    case selectAnnotationFromDocument(PDFReaderState.AnnotationKey)
+    case selectAnnotation(PDFReaderAnnotationKey)
+    case selectAnnotationFromDocument(PDFReaderAnnotationKey)
     case deselectSelectedAnnotation
-    case selectAnnotationDuringEditing(PDFReaderState.AnnotationKey)
-    case deselectAnnotationDuringEditing(PDFReaderState.AnnotationKey)
-    case removeAnnotation(PDFReaderState.AnnotationKey)
+    case selectAnnotationDuringEditing(PDFReaderAnnotationKey)
+    case deselectAnnotationDuringEditing(PDFReaderAnnotationKey)
+    case removeAnnotation(PDFReaderAnnotationKey)
     case removeSelectedAnnotations
     case mergeSelectedAnnotations
     case setTags(key: String, tags: [Tag])

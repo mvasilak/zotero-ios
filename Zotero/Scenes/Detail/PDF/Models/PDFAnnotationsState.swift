@@ -12,8 +12,6 @@ import PSPDFKit
 import RealmSwift
 
 struct PDFAnnotationsState: ViewModelState, ReaderState {
-    typealias AnnotationKey = PDFReaderAnnotationKey
-
     struct Changes: OptionSet {
         typealias RawValue = UInt16
 
@@ -37,13 +35,13 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var library: Library
     var settings: PDFSettings
     var interfaceStyle: UIUserInterfaceStyle
-    var sortedKeys: [AnnotationKey]
+    var sortedKeys: [PDFReaderAnnotationKey]
     var annotationPages: IndexSet
-    var snapshotKeys: [AnnotationKey]?
-    var updatedAnnotationKeys: [AnnotationKey]?
-    var selectedAnnotationKey: AnnotationKey?
+    var snapshotKeys: [PDFReaderAnnotationKey]?
+    var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
+    var selectedAnnotationKey: PDFReaderAnnotationKey?
     var selectedAnnotationCommentActive: Bool
-    var focusSidebarKey: AnnotationKey?
+    var focusSidebarKey: PDFReaderAnnotationKey?
     var sidebarEditingEnabled: Bool
     var deletionEnabled: Bool
     var mergingEnabled: Bool
@@ -62,13 +60,13 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         library: Library,
         settings: PDFSettings,
         interfaceStyle: UIUserInterfaceStyle,
-        sortedKeys: [AnnotationKey] = [],
+        sortedKeys: [PDFReaderAnnotationKey] = [],
         annotationPages: IndexSet = IndexSet(),
-        snapshotKeys: [AnnotationKey]? = nil,
-        updatedAnnotationKeys: [AnnotationKey]? = nil,
-        selectedAnnotationKey: AnnotationKey? = nil,
+        snapshotKeys: [PDFReaderAnnotationKey]? = nil,
+        updatedAnnotationKeys: [PDFReaderAnnotationKey]? = nil,
+        selectedAnnotationKey: PDFReaderAnnotationKey? = nil,
         selectedAnnotationCommentActive: Bool = false,
-        focusSidebarKey: AnnotationKey? = nil,
+        focusSidebarKey: PDFReaderAnnotationKey? = nil,
         sidebarEditingEnabled: Bool = false,
         deletionEnabled: Bool = false,
         mergingEnabled: Bool = false,
@@ -115,7 +113,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         return annotation(for: selectedAnnotationKey)
     }
 
-    func annotation(for key: AnnotationKey) -> PDFAnnotation? {
+    func annotation(for key: PDFReaderAnnotationKey) -> PDFAnnotation? {
         switch key.type {
         case .database:
             return databaseAnnotations?.filter(.key(key.key)).first.flatMap({ PDFDatabaseAnnotation(item: $0) })
