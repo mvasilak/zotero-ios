@@ -12,19 +12,19 @@ import RealmSwift
 
 enum PDFAnnotationsAction {
     case setAnnotations(
-        sortedKeys: [PDFAnnotationsState.AnnotationKey],
+        sortedKeys: [PDFReaderAnnotationKey],
         annotationPages: IndexSet,
-        snapshotKeys: [PDFAnnotationsState.AnnotationKey]?,
-        updatedAnnotationKeys: [PDFAnnotationsState.AnnotationKey]?,
+        snapshotKeys: [PDFReaderAnnotationKey]?,
+        updatedAnnotationKeys: [PDFReaderAnnotationKey]?,
         databaseAnnotations: Results<RItem>?,
         documentAnnotations: Results<RDocumentAnnotation>?,
         documentAnnotationUniqueBaseColors: [String]
     )
     case setSelection(
-        selectedAnnotationKey: PDFAnnotationsState.AnnotationKey?,
+        selectedAnnotationKey: PDFReaderAnnotationKey?,
         selectedAnnotationCommentActive: Bool,
-        focusSidebarKey: PDFAnnotationsState.AnnotationKey?,
-        updatedAnnotationKeys: [PDFAnnotationsState.AnnotationKey]?
+        focusSidebarKey: PDFReaderAnnotationKey?,
+        updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     )
     case setCommentActive(Bool)
     case setSidebarEditing(enabled: Bool)
@@ -49,7 +49,7 @@ enum PDFAnnotationsOutputAction {
         highlightText: NSAttributedString,
         higlightFont: UIFont
     )
-    case removeAnnotation(PDFAnnotationsState.AnnotationKey)
+    case removeAnnotation(PDFReaderAnnotationKey)
     case setComment(key: String, comment: NSAttributedString)
     case setCommentActive(Bool)
     case changeFilter(AnnotationsFilter?)
@@ -57,7 +57,7 @@ enum PDFAnnotationsOutputAction {
     case mergeSelectedAnnotations
     case removeSelectedAnnotations
     case setSidebarEditingEnabled(Bool)
-    case selectAnnotationDuringEditing(PDFAnnotationsState.AnnotationKey)
-    case selectAnnotation(PDFAnnotationsState.AnnotationKey)
-    case deselectAnnotationDuringEditing(PDFAnnotationsState.AnnotationKey)
+    case selectAnnotationDuringEditing(PDFReaderAnnotationKey)
+    case selectAnnotation(PDFReaderAnnotationKey)
+    case deselectAnnotationDuringEditing(PDFReaderAnnotationKey)
 }
