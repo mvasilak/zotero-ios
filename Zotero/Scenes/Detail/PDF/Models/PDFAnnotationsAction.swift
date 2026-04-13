@@ -22,7 +22,6 @@ enum PDFAnnotationsAction {
     )
     case setSelection(
         selectedAnnotationKey: PDFReaderAnnotationKey?,
-        selectedAnnotationCommentActive: Bool,
         focusSidebarKey: PDFReaderAnnotationKey?,
         updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     )
@@ -51,7 +50,6 @@ enum PDFAnnotationsOutputAction {
     )
     case removeAnnotation(PDFReaderAnnotationKey)
     case setComment(key: String, comment: NSAttributedString)
-    case setCommentActive(Bool)
     case changeFilter(AnnotationsFilter?)
     case searchAnnotations(String)
     case mergeSelectedAnnotations

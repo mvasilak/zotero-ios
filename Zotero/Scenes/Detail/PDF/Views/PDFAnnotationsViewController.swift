@@ -165,7 +165,7 @@ final class PDFAnnotationsViewController: UIViewController {
             reconfigureSelectedCellIfAny()
 
         case .setCommentActive(let isActive):
-            viewModel.process(action: .send(.setCommentActive(isActive)))
+            viewModel.process(action: .setCommentActive(isActive))
 
         case .done:
             break // Done button doesn't appear here

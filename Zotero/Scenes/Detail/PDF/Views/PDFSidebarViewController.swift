@@ -165,13 +165,9 @@ class PDFSidebarViewController: UIViewController {
                     if state.changes.contains(.selection) {
                         annotationsViewModel.process(action: .setSelection(
                             selectedAnnotationKey: state.selectedAnnotationKey,
-                            selectedAnnotationCommentActive: state.selectedAnnotationCommentActive,
                             focusSidebarKey: state.focusSidebarKey,
                             updatedAnnotationKeys: state.updatedAnnotationKeys
                         ))
-                    }
-                    if state.changes.contains(.activeComment) {
-                        annotationsViewModel.process(action: .setCommentActive(state.selectedAnnotationCommentActive))
                     }
                     if state.changes.contains(.sidebarEditing) {
                         annotationsViewModel.process(action: .setSidebarEditing(enabled: state.sidebarEditingEnabled))
@@ -197,6 +193,11 @@ class PDFSidebarViewController: UIViewController {
                 .stateObservable
                 .subscribe(onNext: { [weak viewModel] state in
                     guard let viewModel else { return }
+//                    if state.changes.contains(.activeComment), state.selectedAnnotationKey != nil, viewModel.state.selectedAnnotationCommentActive != state.selectedAnnotationCommentActive {
+                    // 🍎 the extra checks happen also in when processing the action in the reader view model
+                    if state.changes.contains(.activeComment) {
+                        viewModel.process(action: .setCommentActive(state.selectedAnnotationCommentActive))
+                    }
                     guard let action = state.outgoingAction else { return }
                     switch action {
                     case .setTags(let key, let tags):
@@ -220,9 +221,6 @@ class PDFSidebarViewController: UIViewController {
 
                     case .setComment(let key, let comment):
                         viewModel.process(action: .setComment(key: key, comment: comment))
-
-                    case .setCommentActive(let isActive):
-                        viewModel.process(action: .setCommentActive(isActive))
 
                     case .changeFilter(let filter):
                         viewModel.process(action: .changeFilter(filter))
