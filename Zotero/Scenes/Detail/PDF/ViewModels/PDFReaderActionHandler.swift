@@ -190,10 +190,11 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             set(fontSize: size, key: key, viewModel: viewModel)
 
         case .setCommentActive(let isActive):
-            guard viewModel.state.selectedAnnotationKey != nil else { return }
-            update(viewModel: viewModel) { state in
+            guard viewModel.state.selectedAnnotationKey != nil,
+                  viewModel.state.selectedAnnotationCommentActive != isActive
+            else { return }
+            update(viewModel: viewModel, notifyListeners: false) { state in
                 state.selectedAnnotationCommentActive = isActive
-                state.changes = .activeComment
             }
 
         case .setTags(let key, let tags):
@@ -973,7 +974,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
             if state.selectedAnnotationCommentActive {
                 state.selectedAnnotationCommentActive = false
-                state.changes.insert(.activeComment)
             }
         }
 
