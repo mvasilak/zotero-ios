@@ -26,13 +26,17 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.changes = .annotations
             }
 
-        case .setSelection(let selectedAnnotationKey, let selectedAnnotationCommentActive, let focusSidebarKey, let updatedAnnotationKeys):
+        case .setSelection(let selectedAnnotationKey, let focusSidebarKey, let updatedAnnotationKeys):
             update(viewModel: viewModel) { state in
+                let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
                 state.selectedAnnotationKey = selectedAnnotationKey
-                state.selectedAnnotationCommentActive = selectedAnnotationCommentActive
                 state.focusSidebarKey = focusSidebarKey
                 state.updatedAnnotationKeys = updatedAnnotationKeys
                 state.changes = .selection
+                if selectionChanged && state.selectedAnnotationCommentActive {
+                    state.selectedAnnotationCommentActive = false
+                    state.changes.insert(.activeComment)
+                }
             }
 
         case .setCommentActive(let isActive):
