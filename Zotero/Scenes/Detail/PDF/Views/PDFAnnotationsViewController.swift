@@ -673,7 +673,7 @@ final class PDFAnnotationsViewController: UIViewController {
         let select = UIBarButtonItem(title: (editingEnabled ? L10n.done : L10n.select), style: .plain, target: nil, action: nil)
         select.rx.tap
             .subscribe(onNext: { [weak self] _ in
-                self?.viewModel.process(action: .send(.setSidebarEditingEnabled(!editingEnabled)))
+                self?.viewModel.process(action: .setSidebarEditingEnabled(!editingEnabled))
             })
             .disposed(by: disposeBag)
         items.append(select)
