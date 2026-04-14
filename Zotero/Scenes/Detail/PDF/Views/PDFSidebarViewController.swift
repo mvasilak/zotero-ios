@@ -140,6 +140,7 @@ class PDFSidebarViewController: UIViewController {
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
                     focusSidebarKey: initialState.focusSidebarKey,
                     sidebarEditingEnabled: initialState.sidebarEditingEnabled,
+                    searchTerm: initialState.searchTerm,
                     filter: initialState.filter,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
@@ -172,9 +173,6 @@ class PDFSidebarViewController: UIViewController {
                             updatedAnnotationKeys: state.updatedAnnotationKeys
                         ))
                     }
-                    if state.changes.contains(.filter) {
-                        annotationsViewModel.process(action: .setFilter(state.filter))
-                    }
                     if state.changes.contains(.library) {
                         annotationsViewModel.process(action: .setLibrary(state.library))
                     }
@@ -197,6 +195,9 @@ class PDFSidebarViewController: UIViewController {
                     }
                     if state.changes.contains(.sidebarEditing) {
                         viewModel.process(action: .setSidebarEditingEnabled(state.sidebarEditingEnabled))
+                    }
+                    if state.changes.contains(.filter) {
+                        viewModel.process(action: .filterAnnotations(searchTerm: state.searchTerm, filter: state.filter))
                     }
                     guard let action = state.outgoingAction else { return }
                     switch action {
@@ -221,12 +222,6 @@ class PDFSidebarViewController: UIViewController {
 
                     case .setComment(let key, let comment):
                         viewModel.process(action: .setComment(key: key, comment: comment))
-
-                    case .changeFilter(let filter):
-                        viewModel.process(action: .changeFilter(filter))
-
-                    case .searchAnnotations(let term):
-                        viewModel.process(action: .searchAnnotations(term))
 
                     case .mergeAnnotations(let annotations):
                         viewModel.process(action: .mergeAnnotations(annotations))

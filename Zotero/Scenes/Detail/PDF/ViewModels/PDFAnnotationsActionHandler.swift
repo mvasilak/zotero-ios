@@ -103,7 +103,17 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.changes = .sidebarEditingSelection
             }
 
+        case .setSearchTerm(let term):
+            let trimmedTerm = term.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedTerm = trimmedTerm.isEmpty ? nil : trimmedTerm
+            guard normalizedTerm != viewModel.state.searchTerm else { return }
+            update(viewModel: viewModel) { state in
+                state.searchTerm = normalizedTerm
+                state.changes = .filter
+            }
+
         case .setFilter(let filter):
+            guard filter != viewModel.state.filter else { return }
             update(viewModel: viewModel) { state in
                 state.filter = filter
                 state.changes = .filter
