@@ -118,7 +118,6 @@ struct PDFReaderState: ViewModelState {
     var libraryToken: NotificationToken?
     var sortedKeys: [PDFReaderAnnotationKey]
     var annotationPages: IndexSet
-    var snapshotKeys: [PDFReaderAnnotationKey]?
     var token: NotificationToken?
     var itemToken: NotificationToken?
     var databaseAnnotations: Results<RItem>!

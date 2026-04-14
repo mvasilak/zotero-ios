@@ -134,7 +134,6 @@ class PDFSidebarViewController: UIViewController {
                     interfaceStyle: initialState.interfaceStyle,
                     sortedKeys: initialState.sortedKeys,
                     annotationPages: initialState.annotationPages,
-                    snapshotKeys: initialState.snapshotKeys,
                     updatedAnnotationKeys: initialState.updatedAnnotationKeys,
                     selectedAnnotationKey: initialState.selectedAnnotationKey,
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
@@ -148,6 +147,16 @@ class PDFSidebarViewController: UIViewController {
                 ),
                 handler: PDFAnnotationsActionHandler()
             )
+            if initialState.searchTerm != nil || initialState.filter != nil {
+                annotationsViewModel.process(action: .setAnnotations(
+                    sortedKeys: initialState.sortedKeys,
+                    annotationPages: initialState.annotationPages,
+                    updatedAnnotationKeys: initialState.updatedAnnotationKeys,
+                    databaseAnnotations: initialState.databaseAnnotations,
+                    documentAnnotations: initialState.documentAnnotations,
+                    documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
+                ))
+            }
             let disposeBag = DisposeBag()
             controllerDisposeBag = disposeBag
 
@@ -159,7 +168,6 @@ class PDFSidebarViewController: UIViewController {
                         annotationsViewModel.process(action: .setAnnotations(
                             sortedKeys: state.sortedKeys,
                             annotationPages: state.annotationPages,
-                            snapshotKeys: state.snapshotKeys,
                             updatedAnnotationKeys: state.updatedAnnotationKeys,
                             databaseAnnotations: state.databaseAnnotations,
                             documentAnnotations: state.documentAnnotations,
