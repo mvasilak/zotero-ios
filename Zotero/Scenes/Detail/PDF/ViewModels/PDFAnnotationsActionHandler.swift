@@ -24,6 +24,12 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.documentAnnotations = documentAnnotations
                 state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
                 state.changes = .annotations
+
+                // If sidebar editing is enabled and there are no results, disable it.
+                if state.sidebarEditingEnabled, (state.snapshotKeys ?? state.sortedKeys).isEmpty {
+                    state.sidebarEditingEnabled = false
+                    state.changes.insert(.sidebarEditing)
+                }
             }
 
         case .setSelection(let selectedAnnotationKey, let focusSidebarKey, let updatedAnnotationKeys):
@@ -45,7 +51,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.changes = .activeComment
             }
 
-        case .setSidebarEditing(let enabled):
+        case .setSidebarEditingEnabled(let enabled):
             update(viewModel: viewModel) { state in
                 state.sidebarEditingEnabled = enabled
                 state.changes = .sidebarEditing

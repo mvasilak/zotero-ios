@@ -26,7 +26,7 @@ enum PDFAnnotationsAction {
         updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     )
     case setCommentActive(Bool)
-    case setSidebarEditing(enabled: Bool)
+    case setSidebarEditingEnabled(Bool)
     case setSidebarEditingSelection(deletionEnabled: Bool, mergingEnabled: Bool)
     case setFilter(AnnotationsFilter?)
     case setLibrary(Library)
@@ -54,7 +54,6 @@ enum PDFAnnotationsOutputAction {
     case searchAnnotations(String)
     case mergeSelectedAnnotations
     case removeSelectedAnnotations
-    case setSidebarEditingEnabled(Bool)
     case selectAnnotationDuringEditing(PDFReaderAnnotationKey)
     case selectAnnotation(PDFReaderAnnotationKey)
     case deselectAnnotationDuringEditing(PDFReaderAnnotationKey)
