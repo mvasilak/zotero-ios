@@ -81,6 +81,11 @@ class PDFSidebarViewController: UIViewController {
     private func show(tab: Tab) {
         view.endEditing(true)
 
+        if tab != .annotations {
+            // Showing a tab other than annotations, so setting sidebar editing to false, in case annotations were edited previously.
+            viewModel.process(action: .setSidebarEditingEnabled(false))
+        }
+        
         if let controller = currentController {
             controllerDisposeBag = nil
             controller.willMove(toParent: nil)

@@ -293,9 +293,9 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
     // MARK: - Reader actions
 
     private func setSidebar(editing enabled: Bool, in viewModel: ViewModel<PDFReaderActionHandler>) {
+        guard viewModel.state.sidebarEditingEnabled != enabled else { return }
         update(viewModel: viewModel) { state in
             state.sidebarEditingEnabled = enabled
-
             if enabled {
                 // Deselect selected annotation before editing
                 _select(key: nil, didSelectInDocument: false, state: &state)

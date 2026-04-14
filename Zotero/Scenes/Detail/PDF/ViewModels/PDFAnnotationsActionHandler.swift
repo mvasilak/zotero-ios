@@ -28,6 +28,9 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 // If sidebar editing is enabled and there are no results, disable it.
                 if state.sidebarEditingEnabled, (state.snapshotKeys ?? state.sortedKeys).isEmpty {
                     state.sidebarEditingEnabled = false
+                    state.selectedAnnotationsDuringEditing = []
+                    state.deletionEnabled = false
+                    state.mergingEnabled = false
                     state.changes.insert(.sidebarEditing)
                 }
             }
