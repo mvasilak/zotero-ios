@@ -64,7 +64,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         interfaceStyle: UIUserInterfaceStyle,
         sortedKeys: [PDFReaderAnnotationKey] = [],
         annotationPages: IndexSet = IndexSet(),
-        snapshotKeys: [PDFReaderAnnotationKey]? = nil,
         updatedAnnotationKeys: [PDFReaderAnnotationKey]? = nil,
         selectedAnnotationKey: PDFReaderAnnotationKey? = nil,
         selectedAnnotationCommentActive: Bool = false,
@@ -86,7 +85,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.interfaceStyle = interfaceStyle
         self.sortedKeys = sortedKeys
         self.annotationPages = annotationPages
-        self.snapshotKeys = snapshotKeys
         self.updatedAnnotationKeys = updatedAnnotationKeys
         self.selectedAnnotationKey = selectedAnnotationKey
         self.selectedAnnotationCommentActive = selectedAnnotationCommentActive

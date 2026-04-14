@@ -14,7 +14,6 @@ enum PDFAnnotationsAction {
     case setAnnotations(
         sortedKeys: [PDFReaderAnnotationKey],
         annotationPages: IndexSet,
-        snapshotKeys: [PDFReaderAnnotationKey]?,
         updatedAnnotationKeys: [PDFReaderAnnotationKey]?,
         databaseAnnotations: Results<RItem>?,
         documentAnnotations: Results<RDocumentAnnotation>?,
