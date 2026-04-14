@@ -31,7 +31,6 @@ final class PDFAnnotationsViewController: UIViewController {
     private weak var deleteBarButton: UIBarButtonItem?
     private weak var mergeBarButton: UIBarButtonItem?
     private var dataSource: TableViewDiffableDataSource<Int, PDFReaderAnnotationKey>!
-    private var searchController: UISearchController!
     private var didAppear = false
 
     weak var parentDelegate: (PDFReaderContainerDelegate & PDFSidebarDelegate & ReaderAnnotationsDelegate)?
@@ -70,7 +69,7 @@ final class PDFAnnotationsViewController: UIViewController {
         setupViews()
         setupToolbar(to: viewModel.state)
         setupDataSource()
-        setupSearchController()
+        setupSearchController(text: viewModel.state.searchTerm)
         setupKeyboardObserving()
         previewHandler.previewsDidLoad = { [weak self] keys in
             self?.updatePreviewsIfVisible(for: keys)
@@ -458,7 +457,7 @@ final class PDFAnnotationsViewController: UIViewController {
             availableTags: sortedTags,
             userInterfaceStyle: viewModel.state.settings.appearanceMode.userInterfaceStyle,
             completed: { [weak self] filter in
-                self?.viewModel.process(action: .send(.changeFilter(filter)))
+                self?.viewModel.process(action: .setFilter(filter))
             }
         )
     }
@@ -567,7 +566,7 @@ final class PDFAnnotationsViewController: UIViewController {
         }
     }
 
-    private func setupSearchController() {
+    private func setupSearchController(text: String?) {
         let insets = UIEdgeInsets(
             top: PDFReaderLayout.searchBarVerticalInset,
             left: PDFReaderLayout.annotationLayout.horizontalInset,
@@ -579,11 +578,13 @@ final class PDFAnnotationsViewController: UIViewController {
         frame.size.height = 65
 
         let searchBar = SearchBar(frame: frame, insets: insets, cornerRadius: 10)
+        searchBar.set(text: text)
         searchBar.text
             .observe(on: MainScheduler.instance)
+            .skip(1)
             .debounce(.milliseconds(150), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] text in
-                self?.viewModel.process(action: .send(.searchAnnotations(text)))
+                self?.viewModel.process(action: .setSearchTerm(text))
             })
             .disposed(by: disposeBag)
         tableView.tableHeaderView = searchBar

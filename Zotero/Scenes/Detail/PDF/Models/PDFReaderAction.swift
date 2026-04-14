@@ -15,7 +15,6 @@ import RealmSwift
 enum PDFReaderAction {
     case prepareDocumentProvider
     case loadDocumentData
-    case searchAnnotations(String)
     case selectAnnotation(PDFReaderAnnotationKey)
     case selectAnnotationFromDocument(PDFReaderAnnotationKey)
     case deselectSelectedAnnotation
@@ -53,7 +52,7 @@ enum PDFReaderAction {
     case setSidebarEditingEnabled(Bool)
     case setSettings(settings: PDFSettings)
     case changeIdleTimerDisabled(Bool)
-    case changeFilter(AnnotationsFilter?)
+    case filterAnnotations(searchTerm: String?, filter: AnnotationsFilter?)
     case submitPendingPage(Int)
     case deinitialiseReader
     case unlock(String)

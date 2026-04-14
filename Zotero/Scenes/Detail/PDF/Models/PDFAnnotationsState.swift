@@ -46,6 +46,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var sidebarEditingEnabled: Bool
     var deletionEnabled: Bool
     var mergingEnabled: Bool
+    var searchTerm: String?
     var filter: AnnotationsFilter?
     var databaseAnnotations: Results<RItem>?
     var documentAnnotations: Results<RDocumentAnnotation>?
@@ -69,6 +70,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         selectedAnnotationCommentActive: Bool = false,
         focusSidebarKey: PDFReaderAnnotationKey? = nil,
         sidebarEditingEnabled: Bool = false,
+        searchTerm: String? = nil,
         filter: AnnotationsFilter? = nil,
         databaseAnnotations: Results<RItem>? = nil,
         documentAnnotations: Results<RDocumentAnnotation>? = nil,
@@ -93,6 +95,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.sidebarEditingEnabled = sidebarEditingEnabled
         deletionEnabled = false
         mergingEnabled = false
+        self.searchTerm = searchTerm
         self.filter = filter
         self.databaseAnnotations = databaseAnnotations
         self.documentAnnotations = documentAnnotations

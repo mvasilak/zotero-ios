@@ -32,6 +32,7 @@ enum PDFAnnotationsAction {
     case deselectAnnotationDuringEditing(PDFReaderAnnotationKey)
     case mergeSelectedAnnotations
     case removeSelectedAnnotations
+    case setSearchTerm(String)
     case setFilter(AnnotationsFilter?)
     case setLibrary(Library)
     case setAppearance(settings: PDFSettings, interfaceStyle: UIUserInterfaceStyle)
@@ -54,8 +55,6 @@ enum PDFAnnotationsOutputAction {
     )
     case removeAnnotation(PDFReaderAnnotationKey)
     case setComment(key: String, comment: NSAttributedString)
-    case changeFilter(AnnotationsFilter?)
-    case searchAnnotations(String)
     case mergeAnnotations(Set<PDFReaderAnnotationKey>)
     case removeAnnotations(Set<PDFReaderAnnotationKey>)
     case selectAnnotation(PDFReaderAnnotationKey)
