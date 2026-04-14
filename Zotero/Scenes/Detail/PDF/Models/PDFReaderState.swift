@@ -25,17 +25,16 @@ struct PDFReaderState: ViewModelState {
         static let settings = Changes(rawValue: 1 << 2)
         static let export = Changes(rawValue: 1 << 3)
         static let activeLineWidth = Changes(rawValue: 1 << 4)
-        static let sidebarEditingSelection = Changes(rawValue: 1 << 5)
-        static let filter = Changes(rawValue: 1 << 6)
-        static let activeEraserSize = Changes(rawValue: 1 << 7)
-        static let initialDataLoaded = Changes(rawValue: 1 << 8)
-        static let visiblePageFromDocument = Changes(rawValue: 1 << 9)
-        static let visiblePageFromThumbnailList = Changes(rawValue: 1 << 10)
-        static let selectionDeletion = Changes(rawValue: 1 << 11)
-        static let activeFontSize = Changes(rawValue: 1 << 12)
-        static let library = Changes(rawValue: 1 << 13)
-        static let md5 = Changes(rawValue: 1 << 14)
-        static let appearance = Changes(rawValue: 1 << 15)
+        static let filter = Changes(rawValue: 1 << 5)
+        static let activeEraserSize = Changes(rawValue: 1 << 6)
+        static let initialDataLoaded = Changes(rawValue: 1 << 7)
+        static let visiblePageFromDocument = Changes(rawValue: 1 << 8)
+        static let visiblePageFromThumbnailList = Changes(rawValue: 1 << 9)
+        static let selectionDeletion = Changes(rawValue: 1 << 10)
+        static let activeFontSize = Changes(rawValue: 1 << 11)
+        static let library = Changes(rawValue: 1 << 12)
+        static let md5 = Changes(rawValue: 1 << 13)
+        static let appearance = Changes(rawValue: 1 << 14)
     }
 
     enum Error: ReaderError {
@@ -146,8 +145,6 @@ struct PDFReaderState: ViewModelState {
         return self.selectedAnnotationKey.flatMap({ self.annotation(for: $0) })
     }
     var selectedAnnotationCommentActive: Bool
-    /// Selected annotations when annotations are being edited in sidebar
-    var selectedAnnotationsDuringEditing: Set<PDFReaderAnnotationKey>
 
     var interfaceStyle: UIUserInterfaceStyle
     var sidebarEditingEnabled: Bool
@@ -156,9 +153,6 @@ struct PDFReaderState: ViewModelState {
     var activeLineWidth: CGFloat
     var activeEraserSize: CGFloat
     var activeFontSize: CGFloat
-
-    var deletionEnabled: Bool
-    var mergingEnabled: Bool
 
     /// Location to focus in document
     var focusDocumentLocation: AnnotationDocumentLocation?
@@ -213,7 +207,6 @@ struct PDFReaderState: ViewModelState {
         self.previewRects = previewRects
         self.changes = []
         self.selectedAnnotationCommentActive = false
-        self.selectedAnnotationsDuringEditing = []
         self.interfaceStyle = interfaceStyle
         self.sidebarEditingEnabled = false
         self.toolColors = [
@@ -227,8 +220,6 @@ struct PDFReaderState: ViewModelState {
         self.activeLineWidth = CGFloat(Defaults.shared.activeLineWidth)
         self.activeEraserSize = CGFloat(Defaults.shared.activeEraserSize)
         self.activeFontSize = CGFloat(Defaults.shared.activeFontSize)
-        self.deletionEnabled = false
-        self.mergingEnabled = false
 
         switch libraryId {
         case .custom:

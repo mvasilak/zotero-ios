@@ -19,11 +19,9 @@ enum PDFReaderAction {
     case selectAnnotation(PDFReaderAnnotationKey)
     case selectAnnotationFromDocument(PDFReaderAnnotationKey)
     case deselectSelectedAnnotation
-    case selectAnnotationDuringEditing(PDFReaderAnnotationKey)
-    case deselectAnnotationDuringEditing(PDFReaderAnnotationKey)
     case removeAnnotation(PDFReaderAnnotationKey)
-    case removeSelectedAnnotations
-    case mergeSelectedAnnotations
+    case mergeAnnotations(Set<PDFReaderAnnotationKey>)
+    case removeAnnotations(Set<PDFReaderAnnotationKey>)
     case setTags(key: String, tags: [Tag])
     case setColor(key: String, color: String)
     case setLineWidth(key: String, width: CGFloat)

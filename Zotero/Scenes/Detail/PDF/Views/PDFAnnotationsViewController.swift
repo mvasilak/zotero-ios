@@ -639,7 +639,7 @@ final class PDFAnnotationsViewController: UIViewController {
             merge.rx.tap
                 .subscribe(onNext: { [weak self] _ in
                      guard let self, viewModel.state.sidebarEditingEnabled else { return }
-                     viewModel.process(action: .send(.mergeSelectedAnnotations))
+                     viewModel.process(action: .mergeSelectedAnnotations)
                  })
                  .disposed(by: disposeBag)
             items.append(merge)
@@ -650,7 +650,7 @@ final class PDFAnnotationsViewController: UIViewController {
             delete.rx.tap
                 .subscribe(onNext: { [weak self] _ in
                     guard let self, viewModel.state.sidebarEditingEnabled else { return }
-                    viewModel.process(action: .send(.removeSelectedAnnotations))
+                    viewModel.process(action: .removeSelectedAnnotations)
                 })
                 .disposed(by: disposeBag)
             items.append(delete)
@@ -690,7 +690,7 @@ extension PDFAnnotationsViewController: UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let key = dataSource.itemIdentifier(for: indexPath) else { return }
         if viewModel.state.sidebarEditingEnabled {
-            viewModel.process(action: .send(.selectAnnotationDuringEditing(key)))
+            viewModel.process(action: .selectAnnotationDuringEditing(key))
         } else {
             viewModel.process(action: .send(.selectAnnotation(key)))
         }
@@ -698,7 +698,7 @@ extension PDFAnnotationsViewController: UITableViewDelegate, UITableViewDataSour
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         guard viewModel.state.sidebarEditingEnabled, let key = dataSource.itemIdentifier(for: indexPath) else { return }
-        viewModel.process(action: .send(.deselectAnnotationDuringEditing(key)))
+        viewModel.process(action: .deselectAnnotationDuringEditing(key))
     }
 
     func tableView(_ tableView: UITableView, shouldBeginMultipleSelectionInteractionAt indexPath: IndexPath) -> Bool {
