@@ -722,43 +722,11 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
     private func filterAnnotations(with term: String?, filter: AnnotationsFilter?, in viewModel: ViewModel<PDFReaderActionHandler>) {
         guard term != viewModel.state.searchTerm || filter != viewModel.state.filter else { return }
-        if term == nil && filter == nil {
-            guard let snapshot = viewModel.state.snapshotKeys else { return }
-            annotationProvider?.updateFilter(term: nil, filter: nil)
-
-            update(viewModel: viewModel) { state in
-                state.searchTerm = nil
-                state.filter = nil
-                state.snapshotKeys = nil
-                state.sortedKeys = snapshot
-                state.changes = .annotations
-            }
-            return
-        }
-
-        let snapshot = viewModel.state.snapshotKeys ?? viewModel.state.sortedKeys
-        let filteredKeys = filteredKeys(from: snapshot, term: term, filter: filter, state: viewModel.state)
         annotationProvider?.updateFilter(term: term, filter: filter)
-
         update(viewModel: viewModel) { state in
             state.searchTerm = term
             state.filter = filter
-            if state.snapshotKeys == nil {
-                state.snapshotKeys = state.sortedKeys
-            }
-            state.sortedKeys = filteredKeys
-            state.changes = .annotations
         }
-    }
-
-    private func filteredKeys(from snapshot: [PDFReaderAnnotationKey], term: String?, filter: AnnotationsFilter?, state: PDFReaderState) -> [PDFReaderAnnotationKey] {
-        if term == nil && filter == nil {
-            return snapshot
-        }
-        return snapshot.filter({ key in
-            guard let annotation = state.annotation(for: key) else { return false }
-            return annotation.matches(term: term, filter: filter, displayName: state.displayName, username: state.username)
-        })
     }
 
     /// Set selected annotation. Also sets `focusSidebarIndexPath` or `focusDocumentLocation` if needed.
@@ -1575,6 +1543,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                 state.visiblePage = page
                 state.token = token
                 state.itemToken = itemToken
+                // Since no sidebar annotations view controller has been initialized yet, the annotations changes will result in a no-op.
                 state.changes = [.annotations, .initialDataLoaded]
                 state.initialPage = nil
 
@@ -2124,16 +2093,11 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             }
             state.texts = texts
             state.comments = comments
+            // Annotations changes will be observed by sidebar annotations view controller, if in memory.
             state.changes = .annotations
             state.annotationPages = annotationPages
 
-            // Apply changed keys
-            if state.snapshotKeys != nil {
-                state.snapshotKeys = sortedKeys
-                state.sortedKeys = filteredKeys(from: sortedKeys, term: state.searchTerm, filter: state.filter, state: state)
-            } else {
-                state.sortedKeys = sortedKeys
-            }
+            state.sortedKeys = sortedKeys
 
             // Filter updated keys to include only keys that are actually available in `sortedKeys`. If filter/search is turned on and an item is edited so that it disappears from the filter/search,
             // `updatedKeys` will try to update it while the key will be deleted from data source at the same time.

@@ -14,15 +14,18 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
 
     func process(action: PDFAnnotationsAction, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
         switch action {
-        case .setAnnotations(let sortedKeys, let annotationPages, let snapshotKeys, let updatedAnnotationKeys, let databaseAnnotations, let documentAnnotations, let documentAnnotationUniqueBaseColors):
+        case .setAnnotations(let sortedKeys, let annotationPages, let updatedAnnotationKeys, let databaseAnnotations, let documentAnnotations, let documentAnnotationUniqueBaseColors):
             update(viewModel: viewModel) { state in
-                state.sortedKeys = sortedKeys
                 state.annotationPages = annotationPages
-                state.snapshotKeys = snapshotKeys
                 state.updatedAnnotationKeys = updatedAnnotationKeys
                 state.databaseAnnotations = databaseAnnotations
                 state.documentAnnotations = documentAnnotations
                 state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
+                if sortedKeys != state.sortedKeys {
+                    state.sortedKeys = sortedKeys
+                    state.snapshotKeys = nil
+                }
+                applyFilter(to: &state)
                 state.changes = .annotations
 
                 // If sidebar editing is enabled and there are no results, disable it.
@@ -109,14 +112,16 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             guard normalizedTerm != viewModel.state.searchTerm else { return }
             update(viewModel: viewModel) { state in
                 state.searchTerm = normalizedTerm
-                state.changes = .filter
+                applyFilter(to: &state)
+                state.changes = [.annotations, .filter]
             }
 
         case .setFilter(let filter):
             guard filter != viewModel.state.filter else { return }
             update(viewModel: viewModel) { state in
                 state.filter = filter
-                state.changes = .filter
+                applyFilter(to: &state)
+                state.changes = [.annotations, .filter]
             }
 
         case .setLibrary(let library):
@@ -271,7 +276,30 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
 
         return true
     }
-//
+
+    private func applyFilter(to state: inout PDFAnnotationsState) {
+        guard state.searchTerm != nil || state.filter != nil else {
+            if let snapshotKeys = state.snapshotKeys {
+                state.sortedKeys = snapshotKeys
+                state.snapshotKeys = nil
+            }
+            return
+        }
+
+        let snapshotKeys = state.snapshotKeys ?? state.sortedKeys
+        if state.snapshotKeys == nil {
+            state.snapshotKeys = snapshotKeys
+        }
+        state.sortedKeys = filteredKeys(from: snapshotKeys, state: state)
+
+        func filteredKeys(from snapshotKeys: [PDFReaderAnnotationKey], state: PDFAnnotationsState) -> [PDFReaderAnnotationKey] {
+            return snapshotKeys.filter({ key in
+                guard let annotation = state.annotation(for: key) else { return false }
+                return annotation.matches(term: state.searchTerm, filter: state.filter, displayName: state.displayName, username: state.username)
+            })
+        }
+    }
+
 //    private func rects(rects lRects: [CGRect], hasIntersectionWith rRects: [CGRect]) -> Bool {
 //        for rect in lRects {
 //            if rRects.contains(where: { $0.intersects(rect) }) {
