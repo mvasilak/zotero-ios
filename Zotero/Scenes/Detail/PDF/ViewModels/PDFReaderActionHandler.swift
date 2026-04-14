@@ -139,9 +139,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         case .loadDocumentData:
             loadDocumentData(in: viewModel)
 
-        case .searchAnnotations(let term):
-            search(for: term, in: viewModel)
-
         case .selectAnnotation(let key):
             guard !viewModel.state.sidebarEditingEnabled && key != viewModel.state.selectedAnnotationKey else { return }
             select(key: key, didSelectInDocument: false, in: viewModel)
@@ -249,8 +246,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         case .setSidebarEditingEnabled(let enabled):
             setSidebar(editing: enabled, in: viewModel)
 
-        case .changeFilter(let filter):
-            set(filter: filter, in: viewModel)
+        case .filterAnnotations(let searchTerm, let filter):
+            filterAnnotations(with: searchTerm, filter: filter, in: viewModel)
 
         case .deinitialiseReader:
             lastReadWatcher.submit(key: viewModel.state.key, libraryId: viewModel.state.library.identifier, date: Date())
@@ -723,37 +720,18 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 //        }
 //    }
 
-    private func set(filter: AnnotationsFilter?, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard filter != viewModel.state.filter else { return }
-        filterAnnotations(with: viewModel.state.searchTerm, filter: filter, in: viewModel)
-    }
-
-    private func search(for term: String, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        let trimmedTerm = term.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newTerm = trimmedTerm.isEmpty ? nil : trimmedTerm
-        guard newTerm != viewModel.state.searchTerm else { return }
-        filterAnnotations(with: newTerm, filter: viewModel.state.filter, in: viewModel)
-    }
-
-    /// Filters annotations based on given term and filter parameters.
-    /// - parameter term: Term to filter annotations.
-    /// - parameter viewModel: ViewModel.
     private func filterAnnotations(with term: String?, filter: AnnotationsFilter?, in viewModel: ViewModel<PDFReaderActionHandler>) {
+        guard term != viewModel.state.searchTerm || filter != viewModel.state.filter else { return }
         if term == nil && filter == nil {
             guard let snapshot = viewModel.state.snapshotKeys else { return }
             annotationProvider?.updateFilter(term: nil, filter: nil)
 
             update(viewModel: viewModel) { state in
+                state.searchTerm = nil
+                state.filter = nil
                 state.snapshotKeys = nil
                 state.sortedKeys = snapshot
                 state.changes = .annotations
-
-                if state.filter != nil {
-                    state.changes.insert(.filter)
-                }
-
-                state.searchTerm = nil
-                state.filter = nil
             }
             return
         }
@@ -763,18 +741,13 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         annotationProvider?.updateFilter(term: term, filter: filter)
 
         update(viewModel: viewModel) { state in
+            state.searchTerm = term
+            state.filter = filter
             if state.snapshotKeys == nil {
                 state.snapshotKeys = state.sortedKeys
             }
             state.sortedKeys = filteredKeys
             state.changes = .annotations
-
-            if filter != state.filter {
-                state.changes.insert(.filter)
-            }
-
-            state.searchTerm = term
-            state.filter = filter
         }
     }
 
