@@ -135,8 +135,6 @@ class PDFSidebarViewController: UIViewController {
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
                     focusSidebarKey: initialState.focusSidebarKey,
                     sidebarEditingEnabled: initialState.sidebarEditingEnabled,
-                    deletionEnabled: initialState.deletionEnabled,
-                    mergingEnabled: initialState.mergingEnabled,
                     filter: initialState.filter,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
@@ -168,9 +166,6 @@ class PDFSidebarViewController: UIViewController {
                             focusSidebarKey: state.focusSidebarKey,
                             updatedAnnotationKeys: state.updatedAnnotationKeys
                         ))
-                    }
-                    if state.changes.contains(.sidebarEditingSelection) {
-                        annotationsViewModel.process(action: .setSidebarEditingSelection(deletionEnabled: state.deletionEnabled, mergingEnabled: state.mergingEnabled))
                     }
                     if state.changes.contains(.filter) {
                         annotationsViewModel.process(action: .setFilter(state.filter))
@@ -228,20 +223,14 @@ class PDFSidebarViewController: UIViewController {
                     case .searchAnnotations(let term):
                         viewModel.process(action: .searchAnnotations(term))
 
-                    case .mergeSelectedAnnotations:
-                        viewModel.process(action: .mergeSelectedAnnotations)
+                    case .mergeAnnotations(let annotations):
+                        viewModel.process(action: .mergeAnnotations(annotations))
 
-                    case .removeSelectedAnnotations:
-                        viewModel.process(action: .removeSelectedAnnotations)
-
-                    case .selectAnnotationDuringEditing(let key):
-                        viewModel.process(action: .selectAnnotationDuringEditing(key))
+                    case .removeAnnotations(let annotations):
+                        viewModel.process(action: .removeAnnotations(annotations))
 
                     case .selectAnnotation(let key):
                         viewModel.process(action: .selectAnnotation(key))
-
-                    case .deselectAnnotationDuringEditing(let key):
-                        viewModel.process(action: .deselectAnnotationDuringEditing(key))
                     }
                 })
                 .disposed(by: disposeBag)

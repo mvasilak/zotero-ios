@@ -41,6 +41,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     var selectedAnnotationKey: PDFReaderAnnotationKey?
     var selectedAnnotationCommentActive: Bool
+    var selectedAnnotationsDuringEditing: Set<PDFReaderAnnotationKey>
     var focusSidebarKey: PDFReaderAnnotationKey?
     var sidebarEditingEnabled: Bool
     var deletionEnabled: Bool
@@ -68,8 +69,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         selectedAnnotationCommentActive: Bool = false,
         focusSidebarKey: PDFReaderAnnotationKey? = nil,
         sidebarEditingEnabled: Bool = false,
-        deletionEnabled: Bool = false,
-        mergingEnabled: Bool = false,
         filter: AnnotationsFilter? = nil,
         databaseAnnotations: Results<RItem>? = nil,
         documentAnnotations: Results<RDocumentAnnotation>? = nil,
@@ -89,10 +88,11 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.updatedAnnotationKeys = updatedAnnotationKeys
         self.selectedAnnotationKey = selectedAnnotationKey
         self.selectedAnnotationCommentActive = selectedAnnotationCommentActive
+        selectedAnnotationsDuringEditing = []
         self.focusSidebarKey = focusSidebarKey
         self.sidebarEditingEnabled = sidebarEditingEnabled
-        self.deletionEnabled = deletionEnabled
-        self.mergingEnabled = mergingEnabled
+        deletionEnabled = false
+        mergingEnabled = false
         self.filter = filter
         self.databaseAnnotations = databaseAnnotations
         self.documentAnnotations = documentAnnotations

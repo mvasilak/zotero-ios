@@ -54,6 +54,11 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         case .setSidebarEditingEnabled(let enabled):
             update(viewModel: viewModel) { state in
                 state.sidebarEditingEnabled = enabled
+                if !enabled {
+                    state.selectedAnnotationsDuringEditing = []
+                    state.deletionEnabled = false
+                    state.mergingEnabled = false
+                }
                 state.changes = .sidebarEditing
             }
 
@@ -61,6 +66,37 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             update(viewModel: viewModel) { state in
                 state.deletionEnabled = deletionEnabled
                 state.mergingEnabled = mergingEnabled
+                state.changes = .sidebarEditingSelection
+            }
+
+        case .selectAnnotationDuringEditing(let key):
+            selectDuringEditing(key: key, in: viewModel)
+
+        case .deselectAnnotationDuringEditing(let key):
+            deselectDuringEditing(key: key, in: viewModel)
+
+        case .mergeSelectedAnnotations:
+            // 🍎 if mergingEnabled, deletionEnabled set during selection, why check it here as well?
+//            guard viewModel.state.sidebarEditingEnabled, selectedAnnotationsMergeable(selected: viewModel.state.selectedAnnotationsDuringEditing, in: viewModel) else { return }
+            guard viewModel.state.mergingEnabled else { return }
+            update(viewModel: viewModel) { state in
+                // 🍎 rather than outgoing action, change .merging and .mergedAnnotations parameter to be observed and passed?
+                state.outgoingAction = .mergeAnnotations(state.selectedAnnotationsDuringEditing)
+                state.mergingEnabled = false
+                state.deletionEnabled = false
+                state.selectedAnnotationsDuringEditing = []
+                state.changes = .sidebarEditingSelection
+            }
+
+        case .removeSelectedAnnotations:
+//            guard viewModel.state.sidebarEditingEnabled else { return }
+            guard viewModel.state.deletionEnabled else { return }
+            update(viewModel: viewModel) { state in
+                // 🍎 rather than outgoing action, change .removing and .removedAnnotations parameter to be observed and passed?
+                state.outgoingAction = .removeAnnotations(state.selectedAnnotationsDuringEditing)
+                state.mergingEnabled = false
+                state.deletionEnabled = false
+                state.selectedAnnotationsDuringEditing = []
                 state.changes = .sidebarEditingSelection
             }
 
@@ -94,4 +130,141 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             }
         }
     }
+
+    private func selectDuringEditing(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
+        guard let annotation = viewModel.state.annotation(for: key) else { return }
+        let annotationDeletable = annotation.isSyncable && annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) != .notEditable
+        update(viewModel: viewModel) { state in
+            if state.selectedAnnotationsDuringEditing.isEmpty {
+                state.deletionEnabled = annotationDeletable
+            } else {
+                state.deletionEnabled = state.deletionEnabled && annotationDeletable
+            }
+
+            state.selectedAnnotationsDuringEditing.insert(key)
+
+            if state.selectedAnnotationsDuringEditing.count == 1 {
+                state.mergingEnabled = false
+            } else {
+                state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+            }
+
+            state.changes = .sidebarEditingSelection
+        }
+    }
+
+    private func deselectDuringEditing(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
+        update(viewModel: viewModel) { state in
+            state.selectedAnnotationsDuringEditing.remove(key)
+            if state.selectedAnnotationsDuringEditing.isEmpty {
+                if state.deletionEnabled {
+                    state.deletionEnabled = false
+                    state.changes = .sidebarEditingSelection
+                }
+                if state.mergingEnabled {
+                    state.mergingEnabled = false
+                    state.changes = .sidebarEditingSelection
+                }
+            } else {
+                // Check whether deletion state changed after removing this annotation.
+                let deletionEnabled = selectedAnnotationsDeletable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+                if state.deletionEnabled != deletionEnabled {
+                    state.deletionEnabled = deletionEnabled
+                    state.changes = .sidebarEditingSelection
+                }
+                if state.selectedAnnotationsDuringEditing.count == 1 {
+                    if state.mergingEnabled {
+                        state.mergingEnabled = false
+                        state.changes = .sidebarEditingSelection
+                    }
+                } else {
+                    state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+                    state.changes = .sidebarEditingSelection
+                }
+            }
+        }
+
+        func selectedAnnotationsDeletable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFAnnotationsActionHandler>) -> Bool {
+            return !selected.contains(where: { key in
+                guard let annotation = viewModel.state.annotation(for: key) else { return false }
+                return !annotation.isSyncable || annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) == .notEditable
+            })
+        }
+    }
+
+    private func selectedAnnotationsMergeable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFAnnotationsActionHandler>) -> Bool {
+        var page: Int?
+        var type: AnnotationType?
+        var color: String?
+//        var rects: [CGRect]?
+
+        let hasSameProperties: (PDFAnnotation) -> Bool = { annotation in
+            // Check whether annotations of one type are selected
+            if let type = type {
+                if type != annotation.type {
+                    return false
+                }
+            } else {
+                type = annotation.type
+            }
+            // Check whether annotations of one color are selected
+            if let color = color {
+                if color != annotation.color {
+                    return false
+                }
+            } else {
+                color = annotation.color
+            }
+            return true
+        }
+
+        for key in selected {
+            guard let annotation = viewModel.state.annotation(for: key) else { continue }
+            guard annotation.isSyncable else { return false }
+
+            if let page = page {
+                // Only 1 page can be selected
+                if page != annotation.page {
+                    return false
+                }
+            } else {
+                page = annotation.page
+            }
+
+            switch annotation.type {
+            case .ink:
+                if !hasSameProperties(annotation) {
+                    return false
+                }
+
+            case .highlight:
+                return false
+//                if !hasSameProperties(annotation) {
+//                    return false
+//                }
+//                // Check whether rects are overlapping
+//                if let rects = rects {
+//                    if !rects(rects: rects, hasIntersectionWith: annotation.rects) {
+//                        return false
+//                    }
+//                } else {
+//                    rects = annotation.rects
+//                }
+
+            case .note, .image, .underline, .freeText:
+                return false
+            }
+        }
+
+        return true
+    }
+//
+//    private func rects(rects lRects: [CGRect], hasIntersectionWith rRects: [CGRect]) -> Bool {
+//        for rect in lRects {
+//            if rRects.contains(where: { $0.intersects(rect) }) {
+//                return true
+//            }
+//        }
+//        return false
+//    }
 }
