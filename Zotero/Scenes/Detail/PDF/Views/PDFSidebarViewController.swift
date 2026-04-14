@@ -169,9 +169,6 @@ class PDFSidebarViewController: UIViewController {
                             updatedAnnotationKeys: state.updatedAnnotationKeys
                         ))
                     }
-                    if state.changes.contains(.sidebarEditing) {
-                        annotationsViewModel.process(action: .setSidebarEditing(enabled: state.sidebarEditingEnabled))
-                    }
                     if state.changes.contains(.sidebarEditingSelection) {
                         annotationsViewModel.process(action: .setSidebarEditingSelection(deletionEnabled: state.deletionEnabled, mergingEnabled: state.mergingEnabled))
                     }
@@ -197,6 +194,9 @@ class PDFSidebarViewController: UIViewController {
                     // 🍎 the extra checks happen also in when processing the action in the reader view model
                     if state.changes.contains(.activeComment) {
                         viewModel.process(action: .setCommentActive(state.selectedAnnotationCommentActive))
+                    }
+                    if state.changes.contains(.sidebarEditing) {
+                        viewModel.process(action: .setSidebarEditingEnabled(state.sidebarEditingEnabled))
                     }
                     guard let action = state.outgoingAction else { return }
                     switch action {
@@ -233,9 +233,6 @@ class PDFSidebarViewController: UIViewController {
 
                     case .removeSelectedAnnotations:
                         viewModel.process(action: .removeSelectedAnnotations)
-
-                    case .setSidebarEditingEnabled(let enabled):
-                        viewModel.process(action: .setSidebarEditingEnabled(enabled))
 
                     case .selectAnnotationDuringEditing(let key):
                         viewModel.process(action: .selectAnnotationDuringEditing(key))
