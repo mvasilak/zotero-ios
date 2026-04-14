@@ -153,21 +153,14 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         case .deselectSelectedAnnotation:
             select(key: nil, didSelectInDocument: false, in: viewModel)
 
-        case .selectAnnotationDuringEditing(let key):
-            selectDuringEditing(key: key, in: viewModel)
-
-        case .deselectAnnotationDuringEditing(let key):
-            deselectDuringEditing(key: key, in: viewModel)
-
         case .removeAnnotation(let key):
             remove(key: key, in: viewModel)
 
-        case .removeSelectedAnnotations:
-            removeSelectedAnnotations(in: viewModel)
+        case .removeAnnotations(let annotations):
+            removeAnnotations(annotations, in: viewModel)
 
-        case .mergeSelectedAnnotations:
-            guard viewModel.state.sidebarEditingEnabled else { return }
-            mergeSelectedAnnotations(in: viewModel)
+        case .mergeAnnotations(let annotations):
+            mergeAnnotations(annotations, in: viewModel)
 
         case .parseAndCacheText(let key, let text, let font):
             updateTextCache(key: key, text: text, font: font, viewModel: viewModel, notifyListeners: false)
@@ -299,149 +292,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
     // MARK: - Reader actions
 
-    private func selectDuringEditing(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard let annotation = viewModel.state.annotation(for: key) else { return }
-
-        let annotationDeletable = annotation.isSyncable && annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) != .notEditable
-
-        update(viewModel: viewModel) { state in
-            if state.selectedAnnotationsDuringEditing.isEmpty {
-                state.deletionEnabled = annotationDeletable
-            } else {
-                state.deletionEnabled = state.deletionEnabled && annotationDeletable
-            }
-
-            state.selectedAnnotationsDuringEditing.insert(key)
-
-            if state.selectedAnnotationsDuringEditing.count == 1 {
-                state.mergingEnabled = false
-            } else {
-                state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
-            }
-
-            state.changes = .sidebarEditingSelection
-        }
-    }
-
-    private func deselectDuringEditing(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        update(viewModel: viewModel) { state in
-            state.selectedAnnotationsDuringEditing.remove(key)
-
-            if state.selectedAnnotationsDuringEditing.isEmpty {
-                if state.deletionEnabled {
-                    state.deletionEnabled = false
-                    state.changes = .sidebarEditingSelection
-                }
-
-                if state.mergingEnabled {
-                    state.mergingEnabled = false
-                    state.changes = .sidebarEditingSelection
-                }
-            } else {
-                // Check whether deletion state changed after removing this annotation
-                let deletionEnabled = selectedAnnotationsDeletable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
-
-                if state.deletionEnabled != deletionEnabled {
-                    state.deletionEnabled = deletionEnabled
-                    state.changes = .sidebarEditingSelection
-                }
-
-                if state.selectedAnnotationsDuringEditing.count == 1 {
-                    if state.mergingEnabled {
-                        state.mergingEnabled = false
-                        state.changes = .sidebarEditingSelection
-                    }
-                } else {
-                    state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
-                    state.changes = .sidebarEditingSelection
-                }
-            }
-        }
-    }
-
-    private func selectedAnnotationsMergeable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) -> Bool {
-        var page: Int?
-        var type: AnnotationType?
-        var color: String?
-//        var rects: [CGRect]?
-
-        let hasSameProperties: (PDFAnnotation) -> Bool = { annotation in
-            // Check whether annotations of one type are selected
-            if let type = type {
-                if type != annotation.type {
-                    return false
-                }
-            } else {
-                type = annotation.type
-            }
-            // Check whether annotations of one color are selected
-            if let color = color {
-                if color != annotation.color {
-                    return false
-                }
-            } else {
-                color = annotation.color
-            }
-            return true
-        }
-
-        for key in selected {
-            guard let annotation = viewModel.state.annotation(for: key) else { continue }
-            guard annotation.isSyncable else { return false }
-
-            if let page = page {
-                // Only 1 page can be selected
-                if page != annotation.page {
-                    return false
-                }
-            } else {
-                page = annotation.page
-            }
-
-            switch annotation.type {
-            case .ink:
-                if !hasSameProperties(annotation) {
-                    return false
-                }
-
-            case .highlight:
-                return false
-//                if !hasSameProperties(annotation) {
-//                    return false
-//                }
-//                // Check whether rects are overlapping
-//                if let rects = rects {
-//                    if !rects(rects: rects, hasIntersectionWith: annotation.rects) {
-//                        return false
-//                    }
-//                } else {
-//                    rects = annotation.rects
-//                }
-
-            case .note, .image, .underline, .freeText:
-                return false
-            }
-        }
-
-        return true
-    }
-//
-//    private func rects(rects lRects: [CGRect], hasIntersectionWith rRects: [CGRect]) -> Bool {
-//        for rect in lRects {
-//            if rRects.contains(where: { $0.intersects(rect) }) {
-//                return true
-//            }
-//        }
-//        return false
-//    }
-//
-    private func selectedAnnotationsDeletable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) -> Bool {
-        return !selected.contains(where: { key in
-            guard let annotation = viewModel.state.annotation(for: key) else { return false }
-            return !annotation.isSyncable || annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) == .notEditable
-        })
-    }
-
     private func setSidebar(editing enabled: Bool, in viewModel: ViewModel<PDFReaderActionHandler>) {
         update(viewModel: viewModel) { state in
             state.sidebarEditingEnabled = enabled
@@ -449,10 +299,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             if enabled {
                 // Deselect selected annotation before editing
                 _select(key: nil, didSelectInDocument: false, state: &state)
-            } else {
-                // Deselect selected annotations during editing
-                state.selectedAnnotationsDuringEditing = []
-                state.deletionEnabled = false
             }
         }
     }
@@ -642,10 +488,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         }
     }
 
-    private func mergeSelectedAnnotations(in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard selectedAnnotationsMergeable(selected: viewModel.state.selectedAnnotationsDuringEditing, in: viewModel) else { return }
-
-        let toMerge = sortedSyncableAnnotationsAndDocumentAnnotations(from: viewModel.state.selectedAnnotationsDuringEditing, state: viewModel.state)
+    private func mergeAnnotations(_ annotations: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) {
+        let toMerge = sortedSyncableAnnotationsAndDocumentAnnotations(from: annotations, state: viewModel.state)
 
         guard toMerge.count > 1, let oldest = toMerge.first else { return }
 
@@ -660,13 +504,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
             default:
                 break
-            }
-
-            update(viewModel: viewModel) { state in
-                state.mergingEnabled = false
-                state.deletionEnabled = false
-                state.selectedAnnotationsDuringEditing = []
-                state.changes = .sidebarEditingSelection
             }
         } catch let error {
             update(viewModel: viewModel) { state in
@@ -1085,9 +922,9 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         remove(annotations: [pdfAnnotation], in: viewModel.state.document)
     }
 
-    private func removeSelectedAnnotations(in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard !viewModel.state.selectedAnnotationsDuringEditing.isEmpty else { return }
-        let keys = viewModel.state.selectedAnnotationsDuringEditing.filter({ $0.type == .database })
+    private func removeAnnotations(_ annotations: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) {
+        guard !annotations.isEmpty else { return }
+        let keys = annotations.filter({ $0.type == .database })
         let pdfAnnotations = keys.compactMap({ key -> PSPDFKit.Annotation? in
             guard let annotation = viewModel.state.annotation(for: key),
                   let pdfAnnotation = viewModel.state.document.annotations(at: PageIndex(annotation.page)).first(where: { $0.key == annotation.key })
@@ -1095,13 +932,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             return pdfAnnotation
         })
         remove(annotations: pdfAnnotations, in: viewModel.state.document)
-
-        update(viewModel: viewModel) { state in
-            state.mergingEnabled = false
-            state.deletionEnabled = false
-            state.selectedAnnotationsDuringEditing = []
-            state.changes = .sidebarEditingSelection
-        }
     }
 
     private func remove(annotations: [PSPDFKit.Annotation], in document: PSPDFKit.Document) {
