@@ -173,7 +173,7 @@ class PDFSidebarViewController: UIViewController {
                             documentAnnotationUniqueBaseColors: state.documentAnnotationUniqueBaseColors
                         ))
                     }
-                    if state.changes.contains(.selection) {
+                    if state.changes.contains(.selection), state.selectionFromDocument {
                         annotationsViewModel.process(action: .setSelection(
                             selectedAnnotationKey: state.selectedAnnotationKey,
                             selectionFromDocument: state.selectionFromDocument,
@@ -206,6 +206,13 @@ class PDFSidebarViewController: UIViewController {
                     if state.changes.contains(.filter) {
                         viewModel.process(action: .filterAnnotations(searchTerm: state.searchTerm, filter: state.filter))
                     }
+                    if state.changes.contains(.selection), state.selectionFromSidebar {
+                        if let selectedAnnotationKey = state.selectedAnnotationKey {
+                            viewModel.process(action: .selectAnnotation(selectedAnnotationKey))
+                        } else {
+                            viewModel.process(action: .deselectSelectedAnnotationFromDocument)
+                        }
+                    }
                     guard let action = state.outgoingAction else { return }
                     switch action {
                     case .setTags(let key, let tags):
@@ -235,9 +242,6 @@ class PDFSidebarViewController: UIViewController {
 
                     case .removeAnnotations(let annotations):
                         viewModel.process(action: .removeAnnotations(annotations))
-
-                    case .selectAnnotation(let key):
-                        viewModel.process(action: .selectAnnotation(key))
                     }
                 })
                 .disposed(by: disposeBag)

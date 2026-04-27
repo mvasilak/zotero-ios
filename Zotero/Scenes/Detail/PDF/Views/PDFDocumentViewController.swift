@@ -715,7 +715,7 @@ final class PDFDocumentViewController: UIViewController {
 
                 interactions.deselectAnnotation.addActivationCondition { [weak viewModel] _, _, _ -> Bool in
                     // `interactions.deselectAnnotation.addActivationCallback` is not always called when highglight annotation tool is enabled.
-                    viewModel?.process(action: .deselectSelectedAnnotation)
+                    viewModel?.process(action: .deselectSelectedAnnotationFromDocument)
                     return true
                 }
 
@@ -1012,7 +1012,7 @@ extension PDFDocumentViewController: UIPopoverPresentationControllerDelegate {
               let type = viewModel.state.selectedAnnotation?.type,
               type == .highlight || type == .underline
         else { return }
-        viewModel.process(action: .deselectSelectedAnnotation)
+        viewModel.process(action: .deselectSelectedAnnotationFromDocument)
     }
 }
 

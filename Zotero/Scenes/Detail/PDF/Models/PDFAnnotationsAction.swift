@@ -56,5 +56,4 @@ enum PDFAnnotationsOutputAction {
     case setComment(key: String, comment: NSAttributedString)
     case mergeAnnotations(Set<PDFReaderAnnotationKey>)
     case removeAnnotations(Set<PDFReaderAnnotationKey>)
-    case selectAnnotation(PDFReaderAnnotationKey)
 }
