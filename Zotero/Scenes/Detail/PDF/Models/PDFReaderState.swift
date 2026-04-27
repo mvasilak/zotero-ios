@@ -139,8 +139,8 @@ struct PDFReaderState: ViewModelState {
 
     /// Location to focus in document
     var focusDocumentLocation: AnnotationDocumentLocation?
-    /// Annotation key to focus in annotation sidebar
-    var focusSidebarKey: PDFReaderAnnotationKey?
+    /// Whether the latest selection originated in the document and should be focused in the sidebar.
+    var selectionFromDocument: Bool
     /// Annotation keys in sidebar that need to reload (for example cell height)
     var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     /// Page that should be shown initially, instead of stored page
@@ -205,6 +205,7 @@ struct PDFReaderState: ViewModelState {
         self.activeLineWidth = CGFloat(Defaults.shared.activeLineWidth)
         self.activeEraserSize = CGFloat(Defaults.shared.activeEraserSize)
         self.activeFontSize = CGFloat(Defaults.shared.activeFontSize)
+        self.selectionFromDocument = false
 
         switch libraryId {
         case .custom:
@@ -229,7 +230,7 @@ struct PDFReaderState: ViewModelState {
         self.changes = []
         self.exportState = nil
         self.focusDocumentLocation = nil
-        self.focusSidebarKey = nil
+        self.selectionFromDocument = false
         self.updatedAnnotationKeys = nil
         self.error = nil
         self.pdfNotification = nil

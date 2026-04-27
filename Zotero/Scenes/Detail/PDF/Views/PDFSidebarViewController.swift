@@ -137,7 +137,6 @@ class PDFSidebarViewController: UIViewController {
                     updatedAnnotationKeys: initialState.updatedAnnotationKeys,
                     selectedAnnotationKey: initialState.selectedAnnotationKey,
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
-                    focusSidebarKey: initialState.focusSidebarKey,
                     sidebarEditingEnabled: initialState.sidebarEditingEnabled,
                     searchTerm: initialState.searchTerm,
                     filter: initialState.filter,
@@ -177,7 +176,7 @@ class PDFSidebarViewController: UIViewController {
                     if state.changes.contains(.selection) {
                         annotationsViewModel.process(action: .setSelection(
                             selectedAnnotationKey: state.selectedAnnotationKey,
-                            focusSidebarKey: state.focusSidebarKey,
+                            selectionFromDocument: state.selectionFromDocument,
                             updatedAnnotationKeys: state.updatedAnnotationKeys
                         ))
                     }

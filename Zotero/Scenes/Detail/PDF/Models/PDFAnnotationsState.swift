@@ -42,7 +42,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var selectedAnnotationKey: PDFReaderAnnotationKey?
     var selectedAnnotationCommentActive: Bool
     var selectedAnnotationsDuringEditing: Set<PDFReaderAnnotationKey>
-    var focusSidebarKey: PDFReaderAnnotationKey?
+    var focusOnSelectionIfNeeded: Bool
     var sidebarEditingEnabled: Bool
     var deletionEnabled: Bool
     var mergingEnabled: Bool
@@ -67,7 +67,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         updatedAnnotationKeys: [PDFReaderAnnotationKey]? = nil,
         selectedAnnotationKey: PDFReaderAnnotationKey? = nil,
         selectedAnnotationCommentActive: Bool = false,
-        focusSidebarKey: PDFReaderAnnotationKey? = nil,
         sidebarEditingEnabled: Bool = false,
         searchTerm: String? = nil,
         filter: AnnotationsFilter? = nil,
@@ -89,7 +88,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.selectedAnnotationKey = selectedAnnotationKey
         self.selectedAnnotationCommentActive = selectedAnnotationCommentActive
         selectedAnnotationsDuringEditing = []
-        self.focusSidebarKey = focusSidebarKey
         self.sidebarEditingEnabled = sidebarEditingEnabled
         deletionEnabled = false
         mergingEnabled = false
@@ -100,12 +98,13 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
         self.changes = changes
         self.outgoingAction = nil
+        focusOnSelectionIfNeeded = true
     }
 
     mutating func cleanup() {
         changes = []
         updatedAnnotationKeys = nil
-        focusSidebarKey = nil
+        focusOnSelectionIfNeeded = false
         outgoingAction = nil
     }
 

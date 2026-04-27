@@ -21,7 +21,7 @@ enum PDFAnnotationsAction {
     )
     case setSelection(
         selectedAnnotationKey: PDFReaderAnnotationKey?,
-        focusSidebarKey: PDFReaderAnnotationKey?,
+        selectionFromDocument: Bool,
         updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     )
     case setCommentActive(Bool)
