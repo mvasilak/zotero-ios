@@ -754,6 +754,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             }
         }
 
+        state.selectionFromDocument = didSelectInDocument
         state.changes.insert(.selection)
 
         guard let key else {
@@ -767,8 +768,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             if let annotation = state.annotation(for: key) {
                 state.focusDocumentLocation = (annotation.page, annotation.boundingBox(boundingBoxConverter: state.document))
             }
-        } else {
-            state.focusSidebarKey = key
         }
 
         if state.sortedKeys.contains(key) {
@@ -1550,7 +1549,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                 if let (key, location) = selectedData {
                     state.selectedAnnotationKey = key
                     state.focusDocumentLocation = location
-                    state.focusSidebarKey = key
                 }
             }
             annotationProvider?.setVisiblePage(PageIndex(page))

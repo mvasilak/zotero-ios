@@ -80,7 +80,7 @@ final class PDFAnnotationsViewController: UIViewController {
 
         tableView.setEditing(viewModel.state.sidebarEditingEnabled, animated: false)
         updateUI(state: viewModel.state, animatedDifferences: false) { [weak self] in
-            guard let self, let key = viewModel.state.focusSidebarKey, let indexPath = dataSource.indexPath(for: key) else { return }
+            guard let self, viewModel.state.focusOnSelectionIfNeeded, let key = viewModel.state.selectedAnnotationKey, let indexPath = dataSource.indexPath(for: key) else { return }
             tableView.selectRow(at: indexPath, animated: false, scrollPosition: .middle)
         }
 
@@ -225,7 +225,7 @@ final class PDFAnnotationsViewController: UIViewController {
         reloadIfNeeded(for: state, isVisible: isVisible) { [weak self] in
             guard let self else { return }
 
-            if let key = state.focusSidebarKey, let indexPath = dataSource.indexPath(for: key) {
+            if state.focusOnSelectionIfNeeded, let key = state.selectedAnnotationKey, let indexPath = dataSource.indexPath(for: key) {
                 tableView.selectRow(at: indexPath, animated: isVisible, scrollPosition: .middle)
             }
             if state.changes.contains(.sidebarEditingSelection) {
