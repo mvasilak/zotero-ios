@@ -41,9 +41,18 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         case .setSelection(let selectedAnnotationKey, let selectionFromDocument, let updatedAnnotationKeys):
             update(viewModel: viewModel) { state in
                 let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
+                let localUpdatedAnnotationKeys: [PDFReaderAnnotationKey]?
+                if let updatedAnnotationKeys {
+                    localUpdatedAnnotationKeys = updatedAnnotationKeys
+                } else if selectionChanged {
+                    localUpdatedAnnotationKeys = [state.selectedAnnotationKey, selectedAnnotationKey].compactMap({ $0 })
+                } else {
+                    localUpdatedAnnotationKeys = nil
+                }
                 state.selectedAnnotationKey = selectedAnnotationKey
                 state.focusOnSelectionIfNeeded = selectionFromDocument
-                state.updatedAnnotationKeys = updatedAnnotationKeys
+                state.selectionFromSidebar = !selectionFromDocument
+                state.updatedAnnotationKeys = localUpdatedAnnotationKeys
                 state.changes = .selection
                 if selectionChanged && state.selectedAnnotationCommentActive {
                     state.selectedAnnotationCommentActive = false
@@ -64,8 +73,16 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                     state.selectedAnnotationsDuringEditing = []
                     state.deletionEnabled = false
                     state.mergingEnabled = false
+                } else if let selectedAnnotationKey = state.selectedAnnotationKey {
+                    state.selectedAnnotationKey = nil
+                    state.updatedAnnotationKeys = [selectedAnnotationKey]
+                    state.changes.insert(.selection)
+                    if state.selectedAnnotationCommentActive {
+                        state.selectedAnnotationCommentActive = false
+                        state.changes.insert(.activeComment)
+                    }
                 }
-                state.changes = .sidebarEditing
+                state.changes.insert(.sidebarEditing)
             }
 
         case .setSidebarEditingSelection(let deletionEnabled, let mergingEnabled):

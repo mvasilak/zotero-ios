@@ -662,7 +662,7 @@ extension PDFAnnotationsViewController: UITableViewDelegate, UITableViewDataSour
         if viewModel.state.sidebarEditingEnabled {
             viewModel.process(action: .selectAnnotationDuringEditing(key))
         } else {
-            viewModel.process(action: .send(.selectAnnotation(key)))
+            viewModel.process(action: .setSelection(selectedAnnotationKey: key, selectionFromDocument: false, updatedAnnotationKeys: nil))
         }
     }
 

@@ -150,6 +150,9 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         case .deselectSelectedAnnotation:
             select(key: nil, didSelectInDocument: false, in: viewModel)
 
+        case .deselectSelectedAnnotationFromDocument:
+            select(key: nil, didSelectInDocument: true, in: viewModel)
+
         case .removeAnnotation(let key):
             remove(key: key, in: viewModel)
 
@@ -1574,6 +1577,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             handler.update(viewModel: viewModel) { state in
                 if state.selectedAnnotationKey != nil {
                     state.selectedAnnotationKey = nil
+                    state.selectionFromDocument = true
                     state.changes = [.selection, .selectionDeletion]
                 }
                 state.library = library

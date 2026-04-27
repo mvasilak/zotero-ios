@@ -243,7 +243,7 @@ struct PDFReaderState: ViewModelState {
         self.changes = []
         self.exportState = nil
         self.focusDocumentLocation = nil
-        self.selectionFromDocument = false
+        selectionFromDocument = false
         self.updatedAnnotationKeys = nil
         self.error = nil
         self.pdfNotification = nil

@@ -40,6 +40,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var snapshotKeys: [PDFReaderAnnotationKey]?
     var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
     var selectedAnnotationKey: PDFReaderAnnotationKey?
+    var selectionFromSidebar: Bool
     var selectedAnnotationCommentActive: Bool
     var selectedAnnotationsDuringEditing: Set<PDFReaderAnnotationKey>
     var focusOnSelectionIfNeeded: Bool
@@ -86,6 +87,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.annotationPages = annotationPages
         self.updatedAnnotationKeys = updatedAnnotationKeys
         self.selectedAnnotationKey = selectedAnnotationKey
+        self.selectionFromSidebar = false
         self.selectedAnnotationCommentActive = selectedAnnotationCommentActive
         selectedAnnotationsDuringEditing = []
         self.sidebarEditingEnabled = sidebarEditingEnabled
@@ -105,6 +107,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         changes = []
         updatedAnnotationKeys = nil
         focusOnSelectionIfNeeded = false
+        selectionFromSidebar = false
         outgoingAction = nil
     }
 

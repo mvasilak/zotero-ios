@@ -18,6 +18,7 @@ enum PDFReaderAction {
     case selectAnnotation(PDFReaderAnnotationKey)
     case selectAnnotationFromDocument(PDFReaderAnnotationKey)
     case deselectSelectedAnnotation
+    case deselectSelectedAnnotationFromDocument
     case removeAnnotation(PDFReaderAnnotationKey)
     case mergeAnnotations(Set<PDFReaderAnnotationKey>)
     case removeAnnotations(Set<PDFReaderAnnotationKey>)
