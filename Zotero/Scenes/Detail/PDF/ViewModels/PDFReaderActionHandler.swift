@@ -154,10 +154,10 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             select(key: nil, didSelectInDocument: true, in: viewModel)
 
         case .removeAnnotation(let key):
-            remove(key: key, in: viewModel)
+            removeAnnotations([key], in: viewModel)
 
-        case .removeAnnotations(let annotations):
-            removeAnnotations(annotations, in: viewModel)
+        case .removeAnnotations(let keys):
+            removeAnnotations(keys, in: viewModel)
 
         case .mergeAnnotations(let annotations):
             mergeAnnotations(annotations, in: viewModel)
@@ -840,36 +840,25 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         }
     }
 
-    /// Removes Zotero annotation from document.
-    /// - parameter key: Annotation key to remove.
-    /// - parameter viewModel: ViewModel.
-    private func remove(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard let annotation = viewModel.state.annotation(for: key),
-              let pdfAnnotation = viewModel.state.document.annotations(at: PageIndex(annotation.page)).first(where: { $0.key == annotation.key })
-        else { return }
-        remove(annotations: [pdfAnnotation], in: viewModel.state.document)
-    }
-
-    private func removeAnnotations(_ annotations: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) {
-        guard !annotations.isEmpty else { return }
-        let keys = annotations.filter({ $0.type == .database })
-        let pdfAnnotations = keys.compactMap({ key -> PSPDFKit.Annotation? in
+    private func removeAnnotations(_ annotationKeys: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFReaderActionHandler>) {
+        guard !annotationKeys.isEmpty else { return }
+        let pdfAnnotations = annotationKeys.filter({ $0.type == .database }).compactMap({ key -> PSPDFKit.Annotation? in
             guard let annotation = viewModel.state.annotation(for: key),
                   let pdfAnnotation = viewModel.state.document.annotations(at: PageIndex(annotation.page)).first(where: { $0.key == annotation.key })
             else { return nil }
             return pdfAnnotation
         })
         remove(annotations: pdfAnnotations, in: viewModel.state.document)
-    }
 
-    private func remove(annotations: [PSPDFKit.Annotation], in document: PSPDFKit.Document) {
-        document.undoController.recordCommand(named: nil, removing: annotations) {
-            for annotation in annotations {
-                if annotation.flags.contains(.readOnly) {
-                    annotation.flags.remove(.readOnly)
+        func remove(annotations: [PSPDFKit.Annotation], in document: PSPDFKit.Document) {
+            document.undoController.recordCommand(named: nil, removing: annotations) {
+                for annotation in annotations {
+                    if annotation.flags.contains(.readOnly) {
+                        annotation.flags.remove(.readOnly)
+                    }
                 }
+                document.remove(annotations: annotations, options: nil)
             }
-            document.remove(annotations: annotations, options: nil)
         }
     }
 
