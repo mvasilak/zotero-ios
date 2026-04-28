@@ -150,6 +150,8 @@ class PDFSidebarViewController: UIViewController {
                     sortedKeys: initialState.sortedKeys,
                     annotationPages: initialState.annotationPages,
                     changedAnnotationKeys: nil,
+                    selectedAnnotationKey: nil,
+                    selectionFromDocument: false,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
                     documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
@@ -163,16 +165,18 @@ class PDFSidebarViewController: UIViewController {
                 .subscribe(onNext: { [weak annotationsViewModel] state in
                     guard let annotationsViewModel else { return }
                     if state.changes.contains(.annotations) {
+                        let updatesSelection = state.changes.contains(.selection) && state.selectionFromDocument
                         annotationsViewModel.process(action: .setAnnotations(
                             sortedKeys: state.sortedKeys,
                             annotationPages: state.annotationPages,
                             changedAnnotationKeys: state.changedAnnotationKeys,
+                            selectedAnnotationKey: updatesSelection ? state.selectedAnnotationKey : nil,
+                            selectionFromDocument: updatesSelection,
                             databaseAnnotations: state.databaseAnnotations,
                             documentAnnotations: state.documentAnnotations,
                             documentAnnotationUniqueBaseColors: state.documentAnnotationUniqueBaseColors
                         ))
-                    }
-                    if state.changes.contains(.selection), state.selectionFromDocument {
+                    } else if state.changes.contains(.selection), state.selectionFromDocument {
                         annotationsViewModel.process(action: .setSelection(
                             selectedAnnotationKey: state.selectedAnnotationKey,
                             selectionFromDocument: state.selectionFromDocument
