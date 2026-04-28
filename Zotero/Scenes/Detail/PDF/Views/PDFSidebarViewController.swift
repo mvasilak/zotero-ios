@@ -184,8 +184,6 @@ class PDFSidebarViewController: UIViewController {
                 .stateObservable
                 .subscribe(onNext: { [weak viewModel] state in
                     guard let viewModel else { return }
-//                    if state.changes.contains(.activeComment), state.selectedAnnotationKey != nil, viewModel.state.selectedAnnotationCommentActive != state.selectedAnnotationCommentActive {
-                    // 🍎 the extra checks happen also in when processing the action in the reader view model
                     if state.changes.contains(.activeComment) {
                         viewModel.process(action: .setCommentActive(state.selectedAnnotationCommentActive))
                     }

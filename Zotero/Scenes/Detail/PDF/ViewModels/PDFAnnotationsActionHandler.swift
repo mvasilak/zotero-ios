@@ -112,11 +112,8 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             deselectDuringEditing(key: key, in: viewModel)
 
         case .mergeSelectedAnnotations:
-            // 🍎 if mergingEnabled, deletionEnabled set during selection, why check it here as well?
-//            guard viewModel.state.sidebarEditingEnabled, selectedAnnotationsMergeable(selected: viewModel.state.selectedAnnotationsDuringEditing, in: viewModel) else { return }
             guard viewModel.state.mergingEnabled else { return }
             update(viewModel: viewModel) { state in
-                // 🍎 rather than outgoing action, change .merging and .mergedAnnotations parameter to be observed and passed?
                 state.outgoingAction = .mergeAnnotations(state.selectedAnnotationsDuringEditing)
                 state.mergingEnabled = false
                 state.deletionEnabled = false
@@ -125,10 +122,8 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             }
 
         case .removeSelectedAnnotations:
-//            guard viewModel.state.sidebarEditingEnabled else { return }
             guard viewModel.state.deletionEnabled else { return }
             update(viewModel: viewModel) { state in
-                // 🍎 rather than outgoing action, change .removing and .removedAnnotations parameter to be observed and passed?
                 state.outgoingAction = .removeAnnotations(state.selectedAnnotationsDuringEditing)
                 state.mergingEnabled = false
                 state.deletionEnabled = false
