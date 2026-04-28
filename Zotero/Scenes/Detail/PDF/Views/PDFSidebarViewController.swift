@@ -132,7 +132,6 @@ class PDFSidebarViewController: UIViewController {
                     library: initialState.library,
                     settings: initialState.settings,
                     interfaceStyle: initialState.interfaceStyle,
-                    sortedKeys: initialState.sortedKeys,
                     annotationPages: initialState.annotationPages,
                     selectedAnnotationKey: initialState.selectedAnnotationKey,
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
@@ -141,22 +140,12 @@ class PDFSidebarViewController: UIViewController {
                     filter: initialState.filter,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
+                    documentAnnotationKeys: initialState.documentAnnotationKeys,
                     documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
                 ),
                 handler: PDFAnnotationsActionHandler()
             )
-            if initialState.searchTerm != nil || initialState.filter != nil {
-                annotationsViewModel.process(action: .setAnnotations(
-                    sortedKeys: initialState.sortedKeys,
-                    annotationPages: initialState.annotationPages,
-                    changedAnnotationKeys: nil,
-                    selectedAnnotationKey: nil,
-                    selectionFromDocument: false,
-                    databaseAnnotations: initialState.databaseAnnotations,
-                    documentAnnotations: initialState.documentAnnotations,
-                    documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
-                ))
-            }
+            annotationsViewModel.process(action: .initializeSortedKeys)
             let disposeBag = DisposeBag()
             controllerDisposeBag = disposeBag
 
@@ -167,14 +156,11 @@ class PDFSidebarViewController: UIViewController {
                     if state.changes.contains(.annotations) {
                         let updatesSelection = state.changes.contains(.selection) && state.selectionFromDocument
                         annotationsViewModel.process(action: .setAnnotations(
-                            sortedKeys: state.sortedKeys,
                             annotationPages: state.annotationPages,
                             changedAnnotationKeys: state.changedAnnotationKeys,
                             selectedAnnotationKey: updatesSelection ? state.selectedAnnotationKey : nil,
                             selectionFromDocument: updatesSelection,
-                            databaseAnnotations: state.databaseAnnotations,
-                            documentAnnotations: state.documentAnnotations,
-                            documentAnnotationUniqueBaseColors: state.documentAnnotationUniqueBaseColors
+                            databaseAnnotations: state.databaseAnnotations
                         ))
                     } else if state.changes.contains(.selection), state.selectionFromDocument {
                         annotationsViewModel.process(action: .setSelection(

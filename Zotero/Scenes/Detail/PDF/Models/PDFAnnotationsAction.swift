@@ -11,15 +11,13 @@ import UIKit
 import RealmSwift
 
 enum PDFAnnotationsAction {
+    case initializeSortedKeys
     case setAnnotations(
-        sortedKeys: [PDFReaderAnnotationKey],
         annotationPages: IndexSet,
         changedAnnotationKeys: [PDFReaderAnnotationKey]?,
         selectedAnnotationKey: PDFReaderAnnotationKey?,
         selectionFromDocument: Bool,
-        databaseAnnotations: Results<RItem>?,
-        documentAnnotations: Results<RDocumentAnnotation>?,
-        documentAnnotationUniqueBaseColors: [String]
+        databaseAnnotations: Results<RItem>?
     )
     case setSelection(
         selectedAnnotationKey: PDFReaderAnnotationKey?,
