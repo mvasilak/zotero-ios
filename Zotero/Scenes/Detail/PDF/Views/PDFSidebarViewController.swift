@@ -134,7 +134,6 @@ class PDFSidebarViewController: UIViewController {
                     interfaceStyle: initialState.interfaceStyle,
                     sortedKeys: initialState.sortedKeys,
                     annotationPages: initialState.annotationPages,
-                    updatedAnnotationKeys: initialState.updatedAnnotationKeys,
                     selectedAnnotationKey: initialState.selectedAnnotationKey,
                     selectedAnnotationCommentActive: initialState.selectedAnnotationCommentActive,
                     sidebarEditingEnabled: initialState.sidebarEditingEnabled,
@@ -150,7 +149,7 @@ class PDFSidebarViewController: UIViewController {
                 annotationsViewModel.process(action: .setAnnotations(
                     sortedKeys: initialState.sortedKeys,
                     annotationPages: initialState.annotationPages,
-                    updatedAnnotationKeys: initialState.updatedAnnotationKeys,
+                    changedAnnotationKeys: nil,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
                     documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
@@ -167,7 +166,7 @@ class PDFSidebarViewController: UIViewController {
                         annotationsViewModel.process(action: .setAnnotations(
                             sortedKeys: state.sortedKeys,
                             annotationPages: state.annotationPages,
-                            updatedAnnotationKeys: state.updatedAnnotationKeys,
+                            changedAnnotationKeys: state.changedAnnotationKeys,
                             databaseAnnotations: state.databaseAnnotations,
                             documentAnnotations: state.documentAnnotations,
                             documentAnnotationUniqueBaseColors: state.documentAnnotationUniqueBaseColors
@@ -176,8 +175,7 @@ class PDFSidebarViewController: UIViewController {
                     if state.changes.contains(.selection), state.selectionFromDocument {
                         annotationsViewModel.process(action: .setSelection(
                             selectedAnnotationKey: state.selectedAnnotationKey,
-                            selectionFromDocument: state.selectionFromDocument,
-                            updatedAnnotationKeys: state.updatedAnnotationKeys
+                            selectionFromDocument: state.selectionFromDocument
                         ))
                     }
                     if state.changes.contains(.library) {

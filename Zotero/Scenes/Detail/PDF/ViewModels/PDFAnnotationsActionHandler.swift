@@ -14,10 +14,9 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
 
     func process(action: PDFAnnotationsAction, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
         switch action {
-        case .setAnnotations(let sortedKeys, let annotationPages, let updatedAnnotationKeys, let databaseAnnotations, let documentAnnotations, let documentAnnotationUniqueBaseColors):
+        case .setAnnotations(let sortedKeys, let annotationPages, let changedAnnotationKeys, let databaseAnnotations, let documentAnnotations, let documentAnnotationUniqueBaseColors):
             update(viewModel: viewModel) { state in
                 state.annotationPages = annotationPages
-                state.updatedAnnotationKeys = updatedAnnotationKeys
                 state.databaseAnnotations = databaseAnnotations
                 state.documentAnnotations = documentAnnotations
                 state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
@@ -26,6 +25,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                     state.snapshotKeys = nil
                 }
                 applyFilter(to: &state)
+                state.updatedAnnotationKeys = changedAnnotationKeys?.filter({ state.sortedKeys.contains($0) })
                 state.changes = .annotations
 
                 // If sidebar editing is enabled and there are no results, disable it.
@@ -38,21 +38,13 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 }
             }
 
-        case .setSelection(let selectedAnnotationKey, let selectionFromDocument, let updatedAnnotationKeys):
+        case .setSelection(let selectedAnnotationKey, let selectionFromDocument):
             update(viewModel: viewModel) { state in
                 let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
-                let localUpdatedAnnotationKeys: [PDFReaderAnnotationKey]?
-                if let updatedAnnotationKeys {
-                    localUpdatedAnnotationKeys = updatedAnnotationKeys
-                } else if selectionChanged {
-                    localUpdatedAnnotationKeys = [state.selectedAnnotationKey, selectedAnnotationKey].compactMap({ $0 })
-                } else {
-                    localUpdatedAnnotationKeys = nil
-                }
+                state.updatedAnnotationKeys = selectionChanged ? [state.selectedAnnotationKey, selectedAnnotationKey].compactMap({ $0 }) : nil
                 state.selectedAnnotationKey = selectedAnnotationKey
                 state.focusOnSelectionIfNeeded = selectionFromDocument
                 state.selectionFromSidebar = !selectionFromDocument
-                state.updatedAnnotationKeys = localUpdatedAnnotationKeys
                 state.changes = .selection
                 if selectionChanged && state.selectedAnnotationCommentActive {
                     state.selectedAnnotationCommentActive = false

@@ -156,8 +156,8 @@ struct PDFReaderState: ViewModelState {
     var focusDocumentLocation: AnnotationDocumentLocation?
     /// Whether the latest selection originated in the document and should be focused in the sidebar.
     var selectionFromDocument: Bool
-    /// Annotation keys in sidebar that need to reload (for example cell height)
-    var updatedAnnotationKeys: [PDFReaderAnnotationKey]?
+    /// Annotation keys changed by the latest annotation update.
+    var changedAnnotationKeys: [PDFReaderAnnotationKey]?
     /// Page that should be shown initially, instead of stored page
     var initialPage: Int?
     /// Rects that should be highlighted initially, used by note editor to highlight original annotation position
@@ -244,7 +244,7 @@ struct PDFReaderState: ViewModelState {
         self.exportState = nil
         self.focusDocumentLocation = nil
         selectionFromDocument = false
-        self.updatedAnnotationKeys = nil
+        self.changedAnnotationKeys = nil
         self.error = nil
         self.pdfNotification = nil
         self.changedColorForTool = nil

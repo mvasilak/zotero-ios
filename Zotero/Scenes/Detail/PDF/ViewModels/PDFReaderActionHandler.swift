@@ -746,12 +746,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         guard key != state.selectedAnnotationKey else { return }
 
         if let existing = state.selectedAnnotationKey {
-            if state.sortedKeys.contains(existing) {
-                var updatedAnnotationKeys = state.updatedAnnotationKeys ?? []
-                updatedAnnotationKeys.append(existing)
-                state.updatedAnnotationKeys = updatedAnnotationKeys
-            }
-
             if state.selectedAnnotationCommentActive {
                 state.selectedAnnotationCommentActive = false
             }
@@ -771,12 +765,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             if let annotation = state.annotation(for: key) {
                 state.focusDocumentLocation = (annotation.page, annotation.boundingBox(boundingBoxConverter: state.document))
             }
-        }
-
-        if state.sortedKeys.contains(key) {
-            var updatedAnnotationKeys = state.updatedAnnotationKeys ?? []
-            updatedAnnotationKeys.append(key)
-            state.updatedAnnotationKeys = updatedAnnotationKeys
         }
     }
 
@@ -2101,9 +2089,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
             state.sortedKeys = sortedKeys
 
-            // Filter updated keys to include only keys that are actually available in `sortedKeys`. If filter/search is turned on and an item is edited so that it disappears from the filter/search,
-            // `updatedKeys` will try to update it while the key will be deleted from data source at the same time.
-            state.updatedAnnotationKeys = updatedKeys.filter({ state.sortedKeys.contains($0) })
+            state.changedAnnotationKeys = updatedKeys
 
             // Update selection
             if let key = selectKey {
