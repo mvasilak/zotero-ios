@@ -14,15 +14,14 @@ enum PDFAnnotationsAction {
     case setAnnotations(
         sortedKeys: [PDFReaderAnnotationKey],
         annotationPages: IndexSet,
-        updatedAnnotationKeys: [PDFReaderAnnotationKey]?,
+        changedAnnotationKeys: [PDFReaderAnnotationKey]?,
         databaseAnnotations: Results<RItem>?,
         documentAnnotations: Results<RDocumentAnnotation>?,
         documentAnnotationUniqueBaseColors: [String]
     )
     case setSelection(
         selectedAnnotationKey: PDFReaderAnnotationKey?,
-        selectionFromDocument: Bool,
-        updatedAnnotationKeys: [PDFReaderAnnotationKey]?
+        selectionFromDocument: Bool
     )
     case setCommentActive(Bool)
     case setSidebarEditingEnabled(Bool)
