@@ -15,6 +15,8 @@ enum PDFAnnotationsAction {
         sortedKeys: [PDFReaderAnnotationKey],
         annotationPages: IndexSet,
         changedAnnotationKeys: [PDFReaderAnnotationKey]?,
+        selectedAnnotationKey: PDFReaderAnnotationKey?,
+        selectionFromDocument: Bool,
         databaseAnnotations: Results<RItem>?,
         documentAnnotations: Results<RDocumentAnnotation>?,
         documentAnnotationUniqueBaseColors: [String]
