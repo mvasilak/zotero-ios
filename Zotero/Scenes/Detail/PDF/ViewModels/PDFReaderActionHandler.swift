@@ -732,7 +732,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         }
     }
 
-    /// Set selected annotation. Also sets `focusSidebarIndexPath` or `focusDocumentLocation` if needed.
+    /// Set selected annotation. Also sets `focusDocumentLocation` if needed.
     /// - parameter key: Annotation key to be selected. Deselects current annotation if `nil`.
     /// - parameter didSelectInDocument: `true` if annotation was selected in document, false if it was selected in sidebar.
     /// - parameter viewModel: ViewModel.
@@ -745,10 +745,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
     private func _select(key: PDFReaderAnnotationKey?, didSelectInDocument: Bool, state: inout PDFReaderState) {
         guard key != state.selectedAnnotationKey else { return }
 
-        if let existing = state.selectedAnnotationKey {
-            if state.selectedAnnotationCommentActive {
-                state.selectedAnnotationCommentActive = false
-            }
+        if (state.selectedAnnotationKey != nil) && state.selectedAnnotationCommentActive {
+            state.selectedAnnotationCommentActive = false
         }
 
         state.selectionFromDocument = didSelectInDocument
@@ -761,10 +759,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
         state.selectedAnnotationKey = key
 
-        if !didSelectInDocument {
-            if let annotation = state.annotation(for: key) {
-                state.focusDocumentLocation = (annotation.page, annotation.boundingBox(boundingBoxConverter: state.document))
-            }
+        if !didSelectInDocument, let annotation = state.annotation(for: key) {
+            state.focusDocumentLocation = (annotation.page, annotation.boundingBox(boundingBoxConverter: state.document))
         }
     }
 
