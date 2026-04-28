@@ -123,6 +123,7 @@ class PDFSidebarViewController: UIViewController {
 
         func createAnnotationsController() -> PDFAnnotationsViewController {
             let initialState = viewModel.state
+            let annotationProvider = viewModel.handler.annotationProvider
             let annotationsViewModel = ViewModel(
                 initialState: PDFAnnotationsState(
                     key: initialState.key,
@@ -140,8 +141,8 @@ class PDFSidebarViewController: UIViewController {
                     filter: initialState.filter,
                     databaseAnnotations: initialState.databaseAnnotations,
                     documentAnnotations: initialState.documentAnnotations,
-                    documentAnnotationKeys: initialState.documentAnnotationKeys,
-                    documentAnnotationUniqueBaseColors: initialState.documentAnnotationUniqueBaseColors
+                    documentAnnotationKeys: annotationProvider?.keys ?? [],
+                    documentAnnotationUniqueBaseColors: annotationProvider?.uniqueBaseColors ?? []
                 ),
                 handler: PDFAnnotationsActionHandler()
             )
