@@ -1501,8 +1501,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             let loadDocumentAnnotationsStartTime = CFAbsoluteTimeGetCurrent()
 
             let documentAnnotations = annotationProvider?.results
-            let documentAnnotationKeys = annotationProvider?.keys ?? []
-            let documentAnnotationUniqueBaseColors = annotationProvider?.uniqueBaseColors ?? []
+            let documentAnnotationCount = documentAnnotations?.count ?? 0
 
             let annotationPages = readAnnotationPages(attachmentKey: key, libraryId: viewModel.state.library.identifier)
 
@@ -1520,8 +1519,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                 state.databaseAnnotations = databaseAnnotations
                 state.defaultAnnotationPageLabel = defaultAnnotationPageLabel
                 state.documentAnnotations = documentAnnotations
-                state.documentAnnotationKeys = documentAnnotationKeys
-                state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
                 state.annotationPages = annotationPages
                 state.visiblePage = page
                 state.token = token
@@ -1537,7 +1534,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             }
             annotationProvider?.setVisiblePage(PageIndex(page))
 
-            DDLogInfo("PDFReaderActionHandler: loaded PDF with \(pageCount) pages, \(documentAnnotationKeys.count) document annotations, \(databaseAnnotationCount) zotero annotations")
+            DDLogInfo("PDFReaderActionHandler: loaded PDF with \(pageCount) pages, \(documentAnnotationCount) document annotations, \(databaseAnnotationCount) zotero annotations")
             var timeLog = "PDFReaderActionHandler: total time \(endTime - startTime)"
             timeLog += ", initial loading: \(loadDocumentAnnotationsStartTime - startTime)"
             timeLog += ", load all annotations: \(defaultAnnotationPageLabelStartTime - loadDocumentAnnotationsStartTime)"

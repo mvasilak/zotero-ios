@@ -121,8 +121,6 @@ struct PDFReaderState: ViewModelState {
     var itemToken: NotificationToken?
     var databaseAnnotations: Results<RItem>!
     var documentAnnotations: Results<RDocumentAnnotation>!
-    var documentAnnotationKeys: [PDFReaderAnnotationKey]
-    var documentAnnotationUniqueBaseColors: [String]
     var defaultAnnotationPageLabel: DefaultAnnotationPageLabel
     var texts: [String: (String, [UIFont: NSAttributedString])]
     var comments: [String: NSAttributedString]
@@ -191,8 +189,6 @@ struct PDFReaderState: ViewModelState {
         self.username = username
         self.annotationPages = IndexSet()
         self.documentAnnotations = nil
-        self.documentAnnotationKeys = []
-        self.documentAnnotationUniqueBaseColors = []
         self.defaultAnnotationPageLabel = .commonPageOffset(offset: 1)
         self.texts = [:]
         self.comments = [:]
