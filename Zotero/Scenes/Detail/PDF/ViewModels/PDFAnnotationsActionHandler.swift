@@ -27,6 +27,14 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 applyFilter(to: &state)
                 state.updatedAnnotationKeys = changedAnnotationKeys?.filter({ state.sortedKeys.contains($0) })
                 state.changes = .annotations
+                if let selectedAnnotationKey = state.selectedAnnotationKey, !state.sortedKeys.contains(selectedAnnotationKey) {
+                    state.selectedAnnotationKey = nil
+                    state.changes.insert(.selection)
+                    if state.selectedAnnotationCommentActive {
+                        state.selectedAnnotationCommentActive = false
+                        state.changes.insert(.activeComment)
+                    }
+                }
 
                 // If sidebar editing is enabled and there are no results, disable it.
                 if state.sidebarEditingEnabled, (state.snapshotKeys ?? state.sortedKeys).isEmpty {
