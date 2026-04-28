@@ -1506,8 +1506,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
 
             let annotationPages = readAnnotationPages(attachmentKey: key, libraryId: viewModel.state.library.identifier)
 
-            let sortStartTime = CFAbsoluteTimeGetCurrent()
-            let sortedKeys = createSortedKeys(fromDatabaseAnnotations: databaseAnnotations, documentAnnotationKeys: documentAnnotationKeys)
             let defaultAnnotationPageLabelStartTime = CFAbsoluteTimeGetCurrent()
             let defaultAnnotationPageLabel = defaultAnnotationPageLabel(fromDatabaseAnnotations: databaseAnnotations)
             let (page, selectedData) = preselectedData(databaseAnnotations: databaseAnnotations, storedPage: storedPage, boundingBoxConverter: boundingBoxConverter, in: viewModel)
@@ -1524,7 +1522,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                 state.documentAnnotations = documentAnnotations
                 state.documentAnnotationKeys = documentAnnotationKeys
                 state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
-                state.sortedKeys = sortedKeys
                 state.annotationPages = annotationPages
                 state.visiblePage = page
                 state.token = token
@@ -1543,8 +1540,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             DDLogInfo("PDFReaderActionHandler: loaded PDF with \(pageCount) pages, \(documentAnnotationKeys.count) document annotations, \(databaseAnnotationCount) zotero annotations")
             var timeLog = "PDFReaderActionHandler: total time \(endTime - startTime)"
             timeLog += ", initial loading: \(loadDocumentAnnotationsStartTime - startTime)"
-            timeLog += ", load all annotations: \(sortStartTime - loadDocumentAnnotationsStartTime)"
-            timeLog += ", sort keys: \(defaultAnnotationPageLabelStartTime - sortStartTime)"
+            timeLog += ", load all annotations: \(defaultAnnotationPageLabelStartTime - loadDocumentAnnotationsStartTime)"
             timeLog += ", default annotation page label: \(endTime - defaultAnnotationPageLabelStartTime)"
             DDLogInfo(DDLogMessageFormat(stringLiteral: timeLog))
 
@@ -1776,71 +1772,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         }
     }
 
-    private func createSortedKeys(fromDatabaseAnnotations databaseAnnotations: Results<RItem>, documentAnnotationKeys: [PDFReaderAnnotationKey]) -> [PDFReaderAnnotationKey] {
-        var keys: [PDFReaderAnnotationKey] = []
-        for item in databaseAnnotations {
-            guard let annotation = PDFDatabaseAnnotation(item: item), isValid(databaseAnnotation: annotation) else { continue }
-            keys.append(PDFReaderAnnotationKey(key: item.key, sortIndex: item.annotationSortIndex, type: .database))
-        }
-        keys.append(contentsOf: documentAnnotationKeys)
-        keys.sort(by: { lhs, rhs in
-            if lhs.sortIndex != rhs.sortIndex {
-                return lhs.sortIndex < rhs.sortIndex
-            }
-            if lhs.key != rhs.key {
-                return lhs.key < rhs.key
-            }
-            return lhs.type == .database && rhs.type == .document
-        })
-        return keys
-    }
-
-    private func isValid(databaseAnnotation: PDFDatabaseAnnotation) -> Bool {
-        guard databaseAnnotation._page != nil else { return false }
-
-        switch databaseAnnotation.type {
-        case .ink:
-            if databaseAnnotation.item.paths.isEmpty {
-                DDLogInfo("PDFReaderActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing paths")
-                return false
-            }
-
-        case .highlight, .image, .note, .underline:
-            if databaseAnnotation.item.rects.isEmpty {
-                DDLogInfo("PDFReaderActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rects")
-                return false
-            }
-
-        case .freeText:
-            if databaseAnnotation.item.rects.isEmpty {
-                DDLogInfo("PDFReaderActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rects")
-                return false
-            }
-            if databaseAnnotation.fontSize == nil {
-                // Since free text annotations are created in AnnotationConverter using `setBoundingBox(annotation.boundingBox(boundingBoxConverter: boundingBoxConverter), transformSize: true)`
-                // it's ok even if they are missing `fontSize`, so we just log it and continue validation.
-                DDLogInfo("PDFReaderActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing fontSize")
-            }
-            if databaseAnnotation.rotation == nil {
-                DDLogInfo("PDFReaderActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rotation")
-                return false
-            }
-        }
-
-        // Sort index consists of 3 parts separated by "|":
-        // - 1. page index (5 characters)
-        // - 2. character offset (6 characters)
-        // - 3. y position from top (5 characters)
-        let sortIndex = databaseAnnotation.sortIndex
-        let parts = sortIndex.split(separator: "|")
-        if parts.count != 3 || parts[0].count != 5 || parts[1].count != 6 || parts[2].count != 5 {
-            DDLogInfo("PDFReaderActionHandler: invalid sort index (\(sortIndex)) for \(databaseAnnotation.key)")
-            return false
-        }
-
-        return true
-    }
-
     private func defaultAnnotationPageLabel(fromDatabaseAnnotations databaseAnnotations: Results<RItem>) -> PDFReaderState.DefaultAnnotationPageLabel {
         var uniquePageLabelsCountByPage: [Int: [String: Int]] = [:]
         for item in databaseAnnotations {
@@ -2030,8 +1961,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
         }
 
         let annotationPages = readAnnotationPages(attachmentKey: viewModel.state.key, libraryId: viewModel.state.library.identifier)
-        // Create new sorted keys by re-adding document keys
-        let sortedKeys = createSortedKeys(fromDatabaseAnnotations: objects, documentAnnotationKeys: viewModel.state.documentAnnotationKeys)
 
         let defaultAnnotationPageLabel = shouldRecomputeDefaultAnnotationPageLabel ? defaultAnnotationPageLabel(fromDatabaseAnnotations: objects) : nil
 
@@ -2082,8 +2011,6 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             // Annotations changes will be observed by sidebar annotations view controller, if in memory.
             state.changes = .annotations
             state.annotationPages = annotationPages
-
-            state.sortedKeys = sortedKeys
 
             state.changedAnnotationKeys = updatedKeys
 

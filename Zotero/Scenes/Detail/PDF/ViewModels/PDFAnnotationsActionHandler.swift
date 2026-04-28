@@ -8,22 +8,27 @@
 
 import Foundation
 
+import CocoaLumberjackSwift
+import RealmSwift
+
 final class PDFAnnotationsActionHandler: ViewModelActionHandler {
     typealias State = PDFAnnotationsState
     typealias Action = PDFAnnotationsAction
 
     func process(action: PDFAnnotationsAction, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
         switch action {
-        case .setAnnotations(let sortedKeys, let annotationPages, let changedAnnotationKeys, let selectedAnnotationKey, let selectionFromDocument, let databaseAnnotations, let documentAnnotations, let documentAnnotationUniqueBaseColors):
+        case .initializeSortedKeys:
+            update(viewModel: viewModel) { state in
+                updateSortedKeys(in: &state)
+                applyFilter(to: &state)
+                state.changes = .annotations
+            }
+
+        case .setAnnotations(let annotationPages, let changedAnnotationKeys, let selectedAnnotationKey, let selectionFromDocument, let databaseAnnotations):
             update(viewModel: viewModel) { state in
                 state.annotationPages = annotationPages
                 state.databaseAnnotations = databaseAnnotations
-                state.documentAnnotations = documentAnnotations
-                state.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
-                if sortedKeys != state.sortedKeys {
-                    state.sortedKeys = sortedKeys
-                    state.snapshotKeys = nil
-                }
+                updateSortedKeys(in: &state)
                 applyFilter(to: &state)
                 state.updatedAnnotationKeys = changedAnnotationKeys?.filter({ state.sortedKeys.contains($0) })
                 state.changes = .annotations
@@ -174,6 +179,120 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
     }
 
+    private func updateSortedKeys(in state: inout PDFAnnotationsState) {
+        let sortedKeys = createSortedKeys(fromDatabaseAnnotations: state.databaseAnnotations, documentAnnotationKeys: state.documentAnnotationKeys)
+        if sortedKeys != state.sortedKeys {
+            state.sortedKeys = sortedKeys
+            state.snapshotKeys = nil
+        }
+
+        func createSortedKeys(fromDatabaseAnnotations databaseAnnotations: Results<RItem>?, documentAnnotationKeys: [PDFReaderAnnotationKey]) -> [PDFReaderAnnotationKey] {
+            var keys: [PDFReaderAnnotationKey] = []
+            if let databaseAnnotations {
+                for item in databaseAnnotations {
+                    guard let annotation = PDFDatabaseAnnotation(item: item), isValid(databaseAnnotation: annotation) else { continue }
+                    keys.append(PDFReaderAnnotationKey(key: item.key, sortIndex: item.annotationSortIndex, type: .database))
+                }
+            }
+            keys.append(contentsOf: documentAnnotationKeys)
+            keys.sort(by: { lhs, rhs in
+                if lhs.sortIndex != rhs.sortIndex {
+                    return lhs.sortIndex < rhs.sortIndex
+                }
+                if lhs.key != rhs.key {
+                    return lhs.key < rhs.key
+                }
+                return lhs.type == .database && rhs.type == .document
+            })
+            return keys
+
+            func isValid(databaseAnnotation: PDFDatabaseAnnotation) -> Bool {
+                guard databaseAnnotation._page != nil else { return false }
+
+                switch databaseAnnotation.type {
+                case .ink:
+                    if databaseAnnotation.item.paths.isEmpty {
+                        DDLogInfo("PDFAnnotationsActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing paths")
+                        return false
+                    }
+
+                case .highlight, .image, .note, .underline:
+                    if databaseAnnotation.item.rects.isEmpty {
+                        DDLogInfo("PDFAnnotationsActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rects")
+                        return false
+                    }
+
+                case .freeText:
+                    if databaseAnnotation.item.rects.isEmpty {
+                        DDLogInfo("PDFAnnotationsActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rects")
+                        return false
+                    }
+                    if databaseAnnotation.fontSize == nil {
+                        // Since free text annotations are created in AnnotationConverter using `setBoundingBox(annotation.boundingBox(boundingBoxConverter: boundingBoxConverter), transformSize: true)`
+                        // it's ok even if they are missing `fontSize`, so we just log it and continue validation.
+                        DDLogInfo("PDFAnnotationsActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing fontSize")
+                    }
+                    if databaseAnnotation.rotation == nil {
+                        DDLogInfo("PDFAnnotationsActionHandler: \(databaseAnnotation.type) annotation \(databaseAnnotation.key) missing rotation")
+                        return false
+                    }
+                }
+
+                // Sort index consists of 3 parts separated by "|":
+                // - 1. page index (5 characters)
+                // - 2. character offset (6 characters)
+                // - 3. y position from top (5 characters)
+                let sortIndex = databaseAnnotation.sortIndex
+                let parts = sortIndex.split(separator: "|")
+                if parts.count != 3 || parts[0].count != 5 || parts[1].count != 6 || parts[2].count != 5 {
+                    DDLogInfo("PDFAnnotationsActionHandler: invalid sort index (\(sortIndex)) for \(databaseAnnotation.key)")
+                    return false
+                }
+
+                return true
+            }
+        }
+    }
+
+    private func applyFilter(to state: inout PDFAnnotationsState) {
+        guard state.searchTerm != nil || state.filter != nil else {
+            if let snapshotKeys = state.snapshotKeys {
+                state.sortedKeys = snapshotKeys
+                state.snapshotKeys = nil
+            }
+            return
+        }
+
+        let snapshotKeys = state.snapshotKeys ?? state.sortedKeys
+        if state.snapshotKeys == nil {
+            state.snapshotKeys = snapshotKeys
+        }
+        state.sortedKeys = filteredKeys(from: snapshotKeys, state: state)
+
+        func filteredKeys(from snapshotKeys: [PDFReaderAnnotationKey], state: PDFAnnotationsState) -> [PDFReaderAnnotationKey] {
+            return snapshotKeys.filter({ key in
+                guard let annotation = state.annotation(for: key) else { return false }
+                return annotation.matches(term: state.searchTerm, filter: state.filter, displayName: state.displayName, username: state.username)
+            })
+        }
+    }
+
+    private func updateSelection(to selectedAnnotationKey: PDFReaderAnnotationKey?, selectionFromDocument: Bool, selectionFromSidebar: Bool, state: inout PDFAnnotationsState) {
+        let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
+        if selectionChanged {
+            state.updatedAnnotationKeys = state.updatedAnnotationKeys ?? []
+            state.updatedAnnotationKeys?.append(contentsOf: [state.selectedAnnotationKey, selectedAnnotationKey].compactMap({ $0 }))
+        }
+        state.selectedAnnotationKey = selectedAnnotationKey
+        state.focusOnSelectionIfNeeded = selectionFromDocument && (selectedAnnotationKey != nil)
+        state.selectionFromSidebar = selectionFromSidebar
+        state.changes.insert(.selection)
+        if selectionChanged && state.selectedAnnotationCommentActive {
+            state.selectedAnnotationCommentActive = false
+            state.changes.insert(.activeComment)
+        }
+    }
+
     private func selectDuringEditing(key: PDFReaderAnnotationKey, in viewModel: ViewModel<PDFAnnotationsActionHandler>) {
         guard let annotation = viewModel.state.annotation(for: key) else { return }
         let annotationDeletable = annotation.isSyncable && annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) != .notEditable
@@ -232,27 +351,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 guard let annotation = viewModel.state.annotation(for: key) else { return false }
                 return !annotation.isSyncable || annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) == .notEditable
             })
-        }
-    }
-
-    private func updateSelection(
-        to selectedAnnotationKey: PDFReaderAnnotationKey?,
-        selectionFromDocument: Bool,
-        selectionFromSidebar: Bool,
-        state: inout PDFAnnotationsState
-    ) {
-        let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
-        if selectionChanged {
-            state.updatedAnnotationKeys = state.updatedAnnotationKeys ?? []
-            state.updatedAnnotationKeys?.append(contentsOf: [state.selectedAnnotationKey, selectedAnnotationKey].compactMap({ $0 }))
-        }
-        state.selectedAnnotationKey = selectedAnnotationKey
-        state.focusOnSelectionIfNeeded = selectionFromDocument && (selectedAnnotationKey != nil)
-        state.selectionFromSidebar = selectionFromSidebar
-        state.changes.insert(.selection)
-        if selectionChanged && state.selectedAnnotationCommentActive {
-            state.selectedAnnotationCommentActive = false
-            state.changes.insert(.activeComment)
         }
     }
 
@@ -321,29 +419,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
 
         return true
-    }
-
-    private func applyFilter(to state: inout PDFAnnotationsState) {
-        guard state.searchTerm != nil || state.filter != nil else {
-            if let snapshotKeys = state.snapshotKeys {
-                state.sortedKeys = snapshotKeys
-                state.snapshotKeys = nil
-            }
-            return
-        }
-
-        let snapshotKeys = state.snapshotKeys ?? state.sortedKeys
-        if state.snapshotKeys == nil {
-            state.snapshotKeys = snapshotKeys
-        }
-        state.sortedKeys = filteredKeys(from: snapshotKeys, state: state)
-
-        func filteredKeys(from snapshotKeys: [PDFReaderAnnotationKey], state: PDFAnnotationsState) -> [PDFReaderAnnotationKey] {
-            return snapshotKeys.filter({ key in
-                guard let annotation = state.annotation(for: key) else { return false }
-                return annotation.matches(term: state.searchTerm, filter: state.filter, displayName: state.displayName, username: state.username)
-            })
-        }
     }
 
 //    private func rects(rects lRects: [CGRect], hasIntersectionWith rRects: [CGRect]) -> Bool {

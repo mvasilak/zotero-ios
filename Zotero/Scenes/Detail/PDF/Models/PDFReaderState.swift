@@ -116,7 +116,6 @@ struct PDFReaderState: ViewModelState {
 
     var library: Library
     var libraryToken: NotificationToken?
-    var sortedKeys: [PDFReaderAnnotationKey]
     var annotationPages: IndexSet
     var token: NotificationToken?
     var itemToken: NotificationToken?
@@ -190,7 +189,6 @@ struct PDFReaderState: ViewModelState {
         self.title = title
         self.userId = userId
         self.username = username
-        self.sortedKeys = []
         self.annotationPages = IndexSet()
         self.documentAnnotations = nil
         self.documentAnnotationKeys = []

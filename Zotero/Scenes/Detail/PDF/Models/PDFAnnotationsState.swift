@@ -51,6 +51,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
     var filter: AnnotationsFilter?
     var databaseAnnotations: Results<RItem>?
     var documentAnnotations: Results<RDocumentAnnotation>?
+    let documentAnnotationKeys: [PDFReaderAnnotationKey]
     var documentAnnotationUniqueBaseColors: [String]
     var changes: Changes
     var outgoingAction: PDFAnnotationsOutputAction?
@@ -63,7 +64,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         library: Library,
         settings: PDFSettings,
         interfaceStyle: UIUserInterfaceStyle,
-        sortedKeys: [PDFReaderAnnotationKey] = [],
         annotationPages: IndexSet = IndexSet(),
         selectedAnnotationKey: PDFReaderAnnotationKey? = nil,
         selectedAnnotationCommentActive: Bool = false,
@@ -72,6 +72,7 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         filter: AnnotationsFilter? = nil,
         databaseAnnotations: Results<RItem>? = nil,
         documentAnnotations: Results<RDocumentAnnotation>? = nil,
+        documentAnnotationKeys: [PDFReaderAnnotationKey] = [],
         documentAnnotationUniqueBaseColors: [String] = [],
         changes: Changes = []
     ) {
@@ -82,7 +83,6 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.library = library
         self.settings = settings
         self.interfaceStyle = interfaceStyle
-        self.sortedKeys = sortedKeys
         self.annotationPages = annotationPages
         self.updatedAnnotationKeys = nil
         self.selectedAnnotationKey = selectedAnnotationKey
@@ -96,7 +96,10 @@ struct PDFAnnotationsState: ViewModelState, ReaderState {
         self.filter = filter
         self.databaseAnnotations = databaseAnnotations
         self.documentAnnotations = documentAnnotations
+        self.documentAnnotationKeys = documentAnnotationKeys
         self.documentAnnotationUniqueBaseColors = documentAnnotationUniqueBaseColors
+        self.sortedKeys = []
+        self.snapshotKeys = nil
         self.changes = changes
         self.outgoingAction = nil
         focusOnSelectionIfNeeded = true
