@@ -361,6 +361,7 @@ class PDFReaderViewController: UIViewController, ReaderViewController, DocumentK
                 .subscribe(onNext: { [weak self] _ in
                     guard let self else { return }
                     previousTraitCollection = traitCollection
+                    readAloudHandler?.confirmActiveHighlightSession()
                     if let page = documentController?.pdfController?.pageIndex {
                         viewModel.process(action: .submitPendingPage(Int(page)))
                     }
@@ -376,17 +377,15 @@ class PDFReaderViewController: UIViewController, ReaderViewController, DocumentK
         applyNavigationBarButtons(windowSize: windowSize)
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        readAloudHandler?.confirmActiveHighlightSession()
+    }
+
     deinit {
         viewModel.process(action: .changeIdleTimerDisabled(false))
         viewModel.process(action: .deinitialiseReader)
         DDLogInfo("PDFReaderViewController deinitialized")
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        if isMovingFromParent || isBeingDismissed {
-            readAloudHandler?.confirmActiveHighlightSession()
-        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -936,6 +935,7 @@ extension PDFReaderViewController: AnnotationToolbarDelegate {
     }
 
     func toggle(tool: AnnotationTool, options: AnnotationToolOptions) {
+        readAloudHandler?.confirmActiveHighlightSession()
         let pspdfkitTool = tool.pspdfkitTool
         let color = viewModel.state.toolColors[pspdfkitTool]
         documentController?.toggle(annotationTool: pspdfkitTool, color: color, tappedWithStylus: (options == .stylus))
@@ -1172,20 +1172,23 @@ extension PDFReaderViewController: SpeechManagerDelegate {
         documentController?.focus(page: pageIndex)
     }
 
-    func readAloudHighlightChanged(text: String, rects: [CGRect], pageIndex: UInt, sourceLocation: Int, sourceTextLength: Int) {
+    func readAloudHighlightChanged(position: ReadAloudPosition, pageIndex: UInt) {
+        // PDF highlights by geometry.
+        guard case .pdf(let rects) = position else { return }
         documentController?.updateReadAloudHighlight(rects: rects, page: PageIndex(pageIndex))
     }
 
-    func annotationPreviewChanged(text: String, rects: [CGRect], pageIndex: UInt, tool: AnnotationTool, color: String, sourceLocation: Int, sourceTextLength: Int) {
+    func annotationPreviewChanged(position: ReadAloudPosition, pageIndex: UInt, tool: AnnotationTool, color: String) {
+        guard case .pdf(let rects) = position else { return }
         if documentController?.currentPage != pageIndex {
             documentController?.focus(page: pageIndex)
         }
         documentController?.updateAnnotationPreview(rects: rects, page: PageIndex(pageIndex), annotationTool: tool, annotationColor: color)
     }
 
-    func createAnnotation(ofType tool: AnnotationTool, color: String, forText text: String, rects: [CGRect], onPage pageIndex: UInt, sourceLocation: Int, sourceTextLength: Int) {
+    func createAnnotation(ofType tool: AnnotationTool, color: String, position: ReadAloudPosition, onPage pageIndex: UInt) {
         let page = PageIndex(pageIndex)
-        guard !rects.isEmpty else { return }
+        guard case .pdf(let rects) = position, !rects.isEmpty else { return }
         switch tool {
         case .highlight:
             viewModel.process(action: .createHighlight(pageIndex: page, rects: rects, color: color))
