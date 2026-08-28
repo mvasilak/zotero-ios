@@ -86,6 +86,48 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
     lazy var toolbarButton: UIBarButtonItem = {
         return createToolbarButton()
     }()
+    private lazy var zoomOutAction = createZoomAction(
+        title: L10n.Reader.Settings.Zoom.zoomOut,
+        image: "minus.magnifyingglass",
+        event: .zoomOut,
+        enabled: viewModel.state.zoomState.canZoomOut
+    )
+    private lazy var zoomInAction = createZoomAction(
+        title: L10n.Reader.Settings.Zoom.zoomIn,
+        image: "plus.magnifyingglass",
+        event: .zoomIn,
+        enabled: viewModel.state.zoomState.canZoomIn
+    )
+    private lazy var zoomResetAction = createZoomAction(
+        title: L10n.Reader.Settings.Zoom.reset,
+        image: "arrow.left.and.right",
+        event: .zoomReset,
+        enabled: viewModel.state.zoomState.canZoomReset
+    )
+    private lazy var zoomMenuButton: MenuTrackingButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.image = UIImage(systemName: "textformat.size")
+        let button = MenuTrackingButton(configuration: configuration)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.showsLargeContentViewer = true
+        button.largeContentTitle = L10n.Reader.Settings.Zoom.title
+        button.accessibilityLabel = L10n.Reader.Settings.Zoom.title
+        button.menu = UIMenu(children: [zoomOutAction, zoomInAction, zoomResetAction])
+        button.showsMenuAsPrimaryAction = true
+        button.menuWillPresent = { [weak self] in self?.readerMenuWillPresent() }
+        button.menuDidDismiss = { [weak self] in self?.readerMenuDidDismiss() }
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: CheckboxButton.standardNavigationBarButtonSize),
+            button.heightAnchor.constraint(equalToConstant: CheckboxButton.standardNavigationBarButtonSize)
+        ])
+        return button
+    }()
+    private lazy var zoomButton: UIBarButtonItem = {
+        let item = UIBarButtonItem(customView: zoomMenuButton)
+        item.title = L10n.Reader.Settings.Zoom.title
+        item.accessibilityLabel = L10n.Reader.Settings.Zoom.title
+        return item
+    }()
     private lazy var settingsButton: UIBarButtonItem = {
         let settings = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: nil, action: nil)
         settings.accessibilityLabel = L10n.Accessibility.Pdf.settings
@@ -205,7 +247,7 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
             sidebarButton.tag = NavigationBarButton.sidebar.rawValue
             sidebarButton.rx.tap.subscribe(onNext: { [weak self] _ in self?.toggleSidebar(animated: true) }).disposed(by: disposeBag)
 
-            navigationBarLeadingItems = [closeButton, sidebarButton]
+            navigationBarLeadingItems = [closeButton, sidebarButton, zoomButton]
         }
 
         func setupViews() {
@@ -405,6 +447,10 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
             updatePageIndicator(from: state)
         }
 
+        if state.changes.contains(.zoomState) {
+            updateZoomActions(for: state.zoomState)
+        }
+
         if state.changes.contains(.popover) {
             if let key = state.annotationPopoverKey, let rect = state.annotationPopoverRect {
                 showPopover(forKey: key, rect: rect)
@@ -576,6 +622,27 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
                 self.viewModel.process(action: .setSettings(settings))
             })
             .disposed(by: disposeBag)
+    }
+
+    private func createZoomAction(title: String, image: String, event: HtmlEpubReaderState.ZoomEvent, enabled: Bool) -> UIAction {
+        return UIAction(title: title, image: UIImage(systemName: image), attributes: zoomActionAttributes(enabled: enabled)) { [weak self] _ in
+            self?.viewModel.process(action: .zoom(event))
+        }
+    }
+
+    private func updateZoomActions(for state: HtmlEpubReaderState.ZoomState) {
+        zoomInAction.attributes = zoomActionAttributes(enabled: state.canZoomIn)
+        zoomOutAction.attributes = zoomActionAttributes(enabled: state.canZoomOut)
+        zoomResetAction.attributes = zoomActionAttributes(enabled: state.canZoomReset)
+        zoomMenuButton.menu = UIMenu(children: [zoomOutAction, zoomInAction, zoomResetAction])
+    }
+
+    private func zoomActionAttributes(enabled: Bool) -> UIMenuElement.Attributes {
+        var attributes = UIMenuElement.Attributes.keepsMenuPresented
+        if !enabled {
+            attributes.insert(.disabled)
+        }
+        return attributes
     }
 
     private func readerMenuWillPresent() {

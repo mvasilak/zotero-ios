@@ -165,6 +165,12 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 idleTimerController.stopCustomIdleTimer()
             }
 
+        case .zoom(let event):
+            update(viewModel: viewModel) { state in
+                state.zoomEvent = event
+                state.changes = .zoom
+            }
+
         case .setSelectedTextParams(let params):
             update(viewModel: viewModel) { state in
                 state.selectedTextParams = params
@@ -247,8 +253,16 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
         }()
         let outlineChanged = outlinePath != nil && resolvedOutline?.id != viewModel.state.currentOutline?.id
         let pageChanged = newPage != viewModel.state.currentPage || pagesCount != viewModel.state.pagesCount
+        let newZoomState: HtmlEpubReaderState.ZoomState? = {
+            guard let canZoomIn = stats["canZoomIn"] as? Bool,
+                  let canZoomOut = stats["canZoomOut"] as? Bool,
+                  let canZoomReset = stats["canZoomReset"] as? Bool
+            else { return nil }
+            return HtmlEpubReaderState.ZoomState(canZoomIn: canZoomIn, canZoomOut: canZoomOut, canZoomReset: canZoomReset)
+        }()
+        let zoomStateChanged = newZoomState != nil && newZoomState != viewModel.state.zoomState
 
-        guard outlineChanged || pageChanged else { return }
+        guard outlineChanged || pageChanged || zoomStateChanged else { return }
 
         update(viewModel: viewModel) { state in
             var changes: HtmlEpubReaderState.Changes = []
@@ -260,6 +274,10 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 state.currentPage = newPage
                 state.pagesCount = pagesCount
                 changes.insert(.pages)
+            }
+            if let newZoomState, zoomStateChanged {
+                state.zoomState = newZoomState
+                changes.insert(.zoomState)
             }
             state.changes = changes
         }

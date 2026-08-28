@@ -378,6 +378,10 @@ class HtmlEpubDocumentViewController: UIViewController {
             updateInterface(to: state.settings.appearance, userInterfaceStyle: state.interfaceStyle)
         }
 
+        if state.changes.contains(.zoom), let event = state.zoomEvent {
+            zoom(event)
+        }
+
         func search(term: String) {
             webViewHandler.call(javascript: "search({ term: \(WebViewEncoder.encodeForJavascript(term.data(using: .utf8))) });")
                 .observe(on: MainScheduler.instance)
@@ -394,6 +398,21 @@ class HtmlEpubDocumentViewController: UIViewController {
                     DDLogError("HtmlEpubDocumentViewController: navigating to \(key) failed - \(error)")
                 })
                 .disposed(by: disposeBag)
+        }
+
+        func zoom(_ event: HtmlEpubReaderState.ZoomEvent) {
+            let function: String
+            switch event {
+            case .zoomIn:
+                function = "zoomIn"
+
+            case .zoomOut:
+                function = "zoomOut"
+
+            case .zoomReset:
+                function = "zoomReset"
+            }
+            webViewHandler.call(javascript: "window._view.\(function)();").subscribe().disposed(by: disposeBag)
         }
 
         func updateView(modifications: [[String: Any]], insertions: [[String: Any]], deletions: [String]) {
