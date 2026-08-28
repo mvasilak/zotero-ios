@@ -62,6 +62,7 @@ struct HtmlEpubReaderState: ViewModelState {
         let url: URL
         let annotationsJson: String
         let page: Page?
+        let scale: Double
         let selectedAnnotationKey: String?
     }
 
@@ -183,6 +184,7 @@ struct HtmlEpubReaderState: ViewModelState {
     var interfaceStyle: UIUserInterfaceStyle
     var zoomEvent: ZoomEvent?
     var zoomState: ZoomState
+    var scale: Double?
 
     var readerFile: File {
         readerDirectory.copy(withName: "view", ext: "html")
@@ -234,6 +236,7 @@ struct HtmlEpubReaderState: ViewModelState {
         outlineSearch = ""
         documentSearchResults = []
         zoomState = .unavailable
+        scale = nil
 
         switch libraryId {
         case .custom:

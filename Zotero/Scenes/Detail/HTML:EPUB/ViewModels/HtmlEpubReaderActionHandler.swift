@@ -442,6 +442,23 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
             return
         }
 
+        if let scale = state["scale"] as? Double {
+            let readerScale = scale == 1 ? nil : scale
+            if readerScale != viewModel.state.scale {
+                let request = SetReaderScaleDbRequest(key: viewModel.state.key, libraryId: viewModel.state.library.identifier, scale: readerScale)
+                perform(request: request) { [weak self, weak viewModel] error in
+                    guard let self, let viewModel else { return }
+                    if let error {
+                        DDLogError("HtmlEpubReaderActionHandler: can't store reader scale - \(error)")
+                    } else {
+                        update(viewModel: viewModel, notifyListeners: false) { state in
+                            state.scale = readerScale
+                        }
+                    }
+                }
+            }
+        }
+
         let page: String
         if let scrollPercent = state["scrollYPercent"] as? Double {
             page = "\(Decimal(scrollPercent).rounded(to: 1))"
@@ -916,6 +933,7 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 url: viewModel.state.documentFile.createUrl(),
                 annotationsJson: json,
                 page: page,
+                scale: item.readerScale ?? 1,
                 selectedAnnotationKey: viewModel.state.selectedAnnotationKey
             )
 
@@ -931,6 +949,7 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 state.annotations = annotations
                 state.library = library
                 state.documentData = documentData
+                state.scale = item.readerScale
                 state.itemToken = itemToken
                 state.annotationsToken = annotationsToken
                 state.libraryToken = libraryToken

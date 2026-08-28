@@ -433,16 +433,19 @@ class HtmlEpubDocumentViewController: UIViewController {
             let appearance = Appearance.from(appearanceMode: state.settings.appearance, interfaceStyle: state.interfaceStyle)
             setWebViewInterfaceStyle(to: state.settings.appearance, userInterfaceStyle: state.interfaceStyle)
             var javascript = "createView({ type: '\(data.type)', url: '\(data.url.absoluteString.replacingOccurrences(of: "'", with: #"\'"#))', annotations: \(data.annotationsJson), colorScheme: '\(appearance.htmlEpubValue)', \(appearance.htmlEpubThemeOption)"
-            if let key = data.selectedAnnotationKey {
-                javascript += ", location: {annotationID: '\(key)'}"
-            } else if let page = data.page {
+            var viewState = "scale: \(data.scale)"
+            if let page = data.page {
                 switch page {
                 case .html(let scrollYPercent):
-                    javascript += ", viewState: {scrollYPercent: \(scrollYPercent), scale: 1}"
+                    viewState += ", scrollYPercent: \(scrollYPercent)"
 
                 case .epub(let cfi):
-                    javascript += ", viewState: {cfi: '\(cfi)'}"
+                    viewState += ", cfi: '\(cfi)'"
                 }
+            }
+            javascript += ", viewState: {\(viewState)}"
+            if let key = data.selectedAnnotationKey {
+                javascript += ", location: {annotationID: '\(key)'}"
             }
             javascript += "});"
 
