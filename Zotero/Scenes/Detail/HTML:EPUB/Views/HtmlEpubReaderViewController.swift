@@ -60,6 +60,7 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
     private var lastLayoutSize: CGSize?
     private var lastContainerInsets: NSDirectionalEdgeInsets?
     private var isChangingInterfaceVisibility: Bool
+    private var presentedMenuCount = 0
     var containerTopInset: CGFloat {
         return lastContainerInsets?.top ?? currentContainerInsets().top
     }
@@ -178,6 +179,8 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
                 documentWorkerController: documentWorkerController
             )
             handler.delegate = self
+            handler.menuWillPresent = { [weak self] in self?.readerMenuWillPresent() }
+            handler.menuDidDismiss = { [weak self] in self?.readerMenuDidDismiss() }
             readAloudHandler = handler
             navigationBarLeadingItems.append(handler.createReadAloudButton(isSelected: false))
         }
@@ -573,6 +576,17 @@ class HtmlEpubReaderViewController: UIViewController, ReaderViewController {
                 self.viewModel.process(action: .setSettings(settings))
             })
             .disposed(by: disposeBag)
+    }
+
+    private func readerMenuWillPresent() {
+        presentedMenuCount += 1
+        documentController?.view.isUserInteractionEnabled = false
+    }
+
+    private func readerMenuDidDismiss() {
+        presentedMenuCount = max(0, presentedMenuCount - 1)
+        let documentInteractionEnabled = presentedMenuCount == 0
+        documentController?.view.isUserInteractionEnabled = documentInteractionEnabled
     }
 
     private func close() {

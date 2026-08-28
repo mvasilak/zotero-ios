@@ -8,21 +8,6 @@
 
 import UIKit
 
-private final class MenuTrackingButton: UIButton {
-    var menuWillPresent: (() -> Void)?
-    var menuDidDismiss: (() -> Void)?
-
-    override func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willDisplayMenuFor configuration: UIContextMenuConfiguration, animator: (any UIContextMenuInteractionAnimating)?) {
-        super.contextMenuInteraction(interaction, willDisplayMenuFor: configuration, animator: animator)
-        menuWillPresent?()
-    }
-
-    override func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willEndFor configuration: UIContextMenuConfiguration, animator: (any UIContextMenuInteractionAnimating)?) {
-        super.contextMenuInteraction(interaction, willEndFor: configuration, animator: animator)
-        menuDidDismiss?()
-    }
-}
-
 final class ReadAloudHighlighterOverlayView: UIView {
     private weak var textLabel: UILabel?
     private weak var textContainer: UIView?
