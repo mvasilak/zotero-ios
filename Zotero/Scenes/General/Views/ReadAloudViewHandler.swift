@@ -146,7 +146,9 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
     private func updateReadAloudButtonMenu(state: SpeechState) {
         guard let button = navbarHeadphonesButtonRef else { return }
         if (!state.isStopped || state.isOutOfCredits) && activeOverlay?.type != .bottomToolbar {
-            button.menu = createReadAloudMenu()
+            if button.menu == nil {
+                button.menu = createReadAloudMenu()
+            }
             button.showsMenuAsPrimaryAction = true
         } else {
             button.menu = nil
