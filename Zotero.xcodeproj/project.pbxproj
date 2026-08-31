@@ -636,7 +636,7 @@
 		B338E820273AA9B20003DECD /* DisappearActionHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B338E81F273AA9B20003DECD /* DisappearActionHostingController.swift */; };
 		B339459126DE6C2A00E59A02 /* AttachmentFileDeletedNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = B339459026DE6C2900E59A02 /* AttachmentFileDeletedNotification.swift */; };
 		B33979D12493ACA800A923C3 /* ImagePreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33979CF2493ACA800A923C3 /* ImagePreviewViewController.swift */; };
-		B33AB488246D315F00490DDE /* CheckboxButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33AB487246D315F00490DDE /* CheckboxButton.swift */; };
+		B33AB488246D315F00490DDE /* MenuTrackingButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33AB487246D315F00490DDE /* MenuTrackingButton.swift */; };
 		B33E8A4327B6768D00CBC7DE /* CollectionTreeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C8DD8127B502960084E1AD /* CollectionTreeBuilder.swift */; };
 		B33E8A4427B6769A00CBC7DE /* CollectionTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3325F6E27B41D69007C7137 /* CollectionTree.swift */; };
 		B33E8A4627B69FFE00CBC7DE /* AllCollectionPickerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33E8A4527B69FFE00CBC7DE /* AllCollectionPickerState.swift */; };
@@ -903,6 +903,8 @@
 		B37434C82E38C5A800D8FAC2 /* SetSpeechLanguageDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37434C62E38C59A00D8FAC2 /* SetSpeechLanguageDbRequest.swift */; };
 		B37434CA2E38C5B100D8FAC2 /* ReadSpeechLanguageDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37434C92E38C5AB00D8FAC2 /* ReadSpeechLanguageDbRequest.swift */; };
 		B37434CB2E38C5B100D8FAC2 /* ReadSpeechLanguageDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37434C92E38C5AB00D8FAC2 /* ReadSpeechLanguageDbRequest.swift */; };
+		52A94A0133C1789500B9D6E1 /* SetReaderScaleDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A94A0333C1789500B9D6E1 /* SetReaderScaleDbRequest.swift */; };
+		52A94A0233C1789500B9D6E1 /* SetReaderScaleDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A94A0333C1789500B9D6E1 /* SetReaderScaleDbRequest.swift */; };
 		B3748D2026566F4800ED05F8 /* ContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3748D1F26566F4800ED05F8 /* ContainerViewController.swift */; };
 		B3748D2226566F6900ED05F8 /* ContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3748D2126566F6900ED05F8 /* ContainerViewController.swift */; };
 		B3756E8F2B835BDC0001CD0A /* IntraDocumentNavigationButtonsHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3756E8E2B835BDC0001CD0A /* IntraDocumentNavigationButtonsHandler.swift */; };
@@ -1890,7 +1892,7 @@
 		B338E81F273AA9B20003DECD /* DisappearActionHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisappearActionHostingController.swift; sourceTree = "<group>"; };
 		B339459026DE6C2900E59A02 /* AttachmentFileDeletedNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AttachmentFileDeletedNotification.swift; sourceTree = "<group>"; };
 		B33979CF2493ACA800A923C3 /* ImagePreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewViewController.swift; sourceTree = "<group>"; };
-		B33AB487246D315F00490DDE /* CheckboxButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckboxButton.swift; sourceTree = "<group>"; };
+		B33AB487246D315F00490DDE /* MenuTrackingButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuTrackingButton.swift; sourceTree = "<group>"; };
 		B33E8A4527B69FFE00CBC7DE /* AllCollectionPickerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllCollectionPickerState.swift; sourceTree = "<group>"; };
 		B33E8A4727B6A07100CBC7DE /* AllCollectionPickerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllCollectionPickerAction.swift; sourceTree = "<group>"; };
 		B33E8A4927B6A1D000CBC7DE /* AllCollectionPickerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AllCollectionPickerViewController.swift; sourceTree = "<group>"; };
@@ -2094,6 +2096,7 @@
 		B373C98E2B1F5431007FD56C /* PDFThumbnailsLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFThumbnailsLayout.swift; sourceTree = "<group>"; };
 		B37434C62E38C59A00D8FAC2 /* SetSpeechLanguageDbRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetSpeechLanguageDbRequest.swift; sourceTree = "<group>"; };
 		B37434C92E38C5AB00D8FAC2 /* ReadSpeechLanguageDbRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadSpeechLanguageDbRequest.swift; sourceTree = "<group>"; };
+		52A94A0333C1789500B9D6E1 /* SetReaderScaleDbRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetReaderScaleDbRequest.swift; sourceTree = "<group>"; };
 		B3748D1F26566F4800ED05F8 /* ContainerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContainerViewController.swift; sourceTree = "<group>"; };
 		B3748D2126566F6900ED05F8 /* ContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerViewController.swift; sourceTree = "<group>"; };
 		B3756E8E2B835BDC0001CD0A /* IntraDocumentNavigationButtonsHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntraDocumentNavigationButtonsHandler.swift; sourceTree = "<group>"; };
@@ -3045,6 +3048,7 @@
 				B361C2B329DECB220035BF7E /* ResetSettingsVersionDbRequest.swift */,
 				B353F1FA242E21880062EE24 /* ResetTranslatorsDbRequest.swift */,
 				B3588C6825FF7A800049D484 /* SetCollectionCollapsedDbRequest.swift */,
+				52A94A0333C1789500B9D6E1 /* SetReaderScaleDbRequest.swift */,
 				B37434C62E38C59A00D8FAC2 /* SetSpeechLanguageDbRequest.swift */,
 				B3E8B24E27DA3969001825F8 /* SplitAnnotationsDbRequest.swift */,
 				B305646723FC051E003304F2 /* StoreCollectionsDbRequest.swift */,
@@ -3557,7 +3561,7 @@
 				B3CC280A2AA8A8EC00886856 /* AnnotationToolbarHandler.swift */,
 				B340ECA5290FDC9F00EE920D /* AnnotationToolbarViewController.swift */,
 				B38B24B826E7664400BDD1BB /* AnnotationToolOptionsViewController.swift */,
-				B33AB487246D315F00490DDE /* CheckboxButton.swift */,
+				B33AB487246D315F00490DDE /* MenuTrackingButton.swift */,
 				B3A95DA929194BDE00BCCF11 /* DashedView.swift */,
 				B325C4092A7A8DE0008A2F11 /* FreeTextAnnotationView.swift */,
 				B3756E8E2B835BDC0001CD0A /* IntraDocumentNavigationButtonsHandler.swift */,
@@ -5718,6 +5722,7 @@
 				B3A95DAA29194BDE00BCCF11 /* DashedView.swift in Sources */,
 				B3593F1C2668E86100FA4BB2 /* SyncStylesDbRequest.swift in Sources */,
 				B3E9180C25ECE30A002B77AF /* CoreGraphics+Extensions.swift in Sources */,
+				52A94A0133C1789500B9D6E1 /* SetReaderScaleDbRequest.swift in Sources */,
 				B37434C72E38C5A800D8FAC2 /* SetSpeechLanguageDbRequest.swift in Sources */,
 				B30565CD23FC051E003304F2 /* InitializeCustomLibrariesDbRequest.swift in Sources */,
 				B3866A5A2417C1C7006693C4 /* Coordinator.swift in Sources */,
@@ -6006,7 +6011,7 @@
 				B30566B823FC051F003304F2 /* SearchesResponse.swift in Sources */,
 				B3F55A1929EED4CB00A6716E /* ReadAutomaticTagsDbRequest.swift in Sources */,
 				B305660C23FC051E003304F2 /* VersionsRequest.swift in Sources */,
-				B33AB488246D315F00490DDE /* CheckboxButton.swift in Sources */,
+				B33AB488246D315F00490DDE /* MenuTrackingButton.swift in Sources */,
 				B378F4CF242D0CC200B88A05 /* RepoRequest.swift in Sources */,
 				B3F9A4C72B04D0E400684030 /* ReaderSettingsActionHandler.swift in Sources */,
 				B3100918272BF9DC003FC743 /* RWebDavDeletion.swift in Sources */,
@@ -6942,6 +6947,7 @@
 				B355020C2F9F65A600A221E5 /* NSDecimalNumber+Rounding.m in Sources */,
 				B3F9A4CC2B04F2AC00684030 /* WebViewEncoder.swift in Sources */,
 				B3D59F142A38A6C100F6BB7D /* RevertLibraryFilesSyncAction.swift in Sources */,
+				52A94A0233C1789500B9D6E1 /* SetReaderScaleDbRequest.swift in Sources */,
 				B37434C82E38C5A800D8FAC2 /* SetSpeechLanguageDbRequest.swift in Sources */,
 				B377F2A02493725E00022943 /* UrlDetector.swift in Sources */,
 				B305670A23FC08B5003304F2 /* ReadCollectionsDbRequest.swift in Sources */,

@@ -23,6 +23,8 @@ final class ReadAloudControlsView<Delegate: SpeechManagerDelegate>: UIView, Anno
     private weak var settingsButton: UIButton?
     private weak var remainingTimeButton: UIButton?
     private let disposeBag = DisposeBag()
+    var menuWillPresent: (() -> Void)?
+    var menuDidDismiss: (() -> Void)?
 
     init(type: Kind, speechManager: SpeechManager<Delegate>, playAction: @escaping () -> Void, settingsMenu: UIMenu, highlighterAction: (() -> Void)? = nil) {
         let controls = ReadAloudControlsStackView(speechManager: speechManager, playAction: playAction)
@@ -149,10 +151,12 @@ final class ReadAloudControlsView<Delegate: SpeechManagerDelegate>: UIView, Anno
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "slider.horizontal.3", withConfiguration: imageConfig)
         config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-        let settingsButton = UIButton(configuration: config)
+        let settingsButton = MenuTrackingButton(configuration: config)
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
         settingsButton.menu = settingsMenu
         settingsButton.showsMenuAsPrimaryAction = true
+        settingsButton.menuWillPresent = { [weak self] in self?.menuWillPresent?() }
+        settingsButton.menuDidDismiss = { [weak self] in self?.menuDidDismiss?() }
 
         // Remaining time button. It replaces the settings button when the remaining time is low, so it takes over its
         // tap area and menu. The clock image and the time are its own configuration content.
@@ -166,11 +170,13 @@ final class ReadAloudControlsView<Delegate: SpeechManagerDelegate>: UIView, Anno
             attributes.font = .preferredFont(forTextStyle: .caption1)
             return attributes
         }
-        let timeButton = UIButton(configuration: timeConfig)
+        let timeButton = MenuTrackingButton(configuration: timeConfig)
         timeButton.translatesAutoresizingMaskIntoConstraints = false
         timeButton.contentHorizontalAlignment = .leading
         timeButton.menu = settingsMenu
         timeButton.showsMenuAsPrimaryAction = true
+        timeButton.menuWillPresent = { [weak self] in self?.menuWillPresent?() }
+        timeButton.menuDidDismiss = { [weak self] in self?.menuDidDismiss?() }
         timeButton.isHidden = true
 
         let container = UIView()

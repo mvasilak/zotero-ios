@@ -284,6 +284,11 @@
 "pdf.previous_viewport" = "Previous Viewport";
 "pdf.next_viewport" = "Next Viewport";
 
+"reader.settings.zoom.title" = "Zoom";
+"reader.settings.zoom.zoom_in" = "Zoom In";
+"reader.settings.zoom.zoom_out" = "Zoom Out";
+"reader.settings.zoom.reset" = "Reset Zoom";
+
 "accessibility_popup.show_reader" = "Reading Mode";
 "accessibility_popup.show_speech" = "Read Aloud";
 "speech.title" = "Read Aloud";

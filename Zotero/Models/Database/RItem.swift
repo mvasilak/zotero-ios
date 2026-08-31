@@ -151,6 +151,8 @@ final class RItem: Object {
     @Persisted var htmlFreeContent: String?
     /// Selected override speech language for this item
     @Persisted var speechLanguage: String?
+    /// Last reader scale selected for this item. This value is local only.
+    @Persisted var readerScale: Double?
 
     var doi: String? {
         return self.fields.filter(.key(FieldKeys.Item.doi)).first.flatMap({ field -> String? in

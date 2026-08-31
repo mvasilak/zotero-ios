@@ -165,6 +165,12 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 idleTimerController.stopCustomIdleTimer()
             }
 
+        case .zoom(let event):
+            update(viewModel: viewModel) { state in
+                state.zoomEvent = event
+                state.changes = .zoom
+            }
+
         case .setSelectedTextParams(let params):
             update(viewModel: viewModel) { state in
                 state.selectedTextParams = params
@@ -247,8 +253,16 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
         }()
         let outlineChanged = outlinePath != nil && resolvedOutline?.id != viewModel.state.currentOutline?.id
         let pageChanged = newPage != viewModel.state.currentPage || pagesCount != viewModel.state.pagesCount
+        let newZoomState: HtmlEpubReaderState.ZoomState? = {
+            guard let canZoomIn = stats["canZoomIn"] as? Bool,
+                  let canZoomOut = stats["canZoomOut"] as? Bool,
+                  let canZoomReset = stats["canZoomReset"] as? Bool
+            else { return nil }
+            return HtmlEpubReaderState.ZoomState(canZoomIn: canZoomIn, canZoomOut: canZoomOut, canZoomReset: canZoomReset)
+        }()
+        let zoomStateChanged = newZoomState != nil && newZoomState != viewModel.state.zoomState
 
-        guard outlineChanged || pageChanged else { return }
+        guard outlineChanged || pageChanged || zoomStateChanged else { return }
 
         update(viewModel: viewModel) { state in
             var changes: HtmlEpubReaderState.Changes = []
@@ -260,6 +274,10 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 state.currentPage = newPage
                 state.pagesCount = pagesCount
                 changes.insert(.pages)
+            }
+            if let newZoomState, zoomStateChanged {
+                state.zoomState = newZoomState
+                changes.insert(.zoomState)
             }
             state.changes = changes
         }
@@ -422,6 +440,23 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
         guard let state = params["state"] as? [String: Any] else {
             DDLogError("HtmlEpubReaderActionHandler: invalid params - \(params)")
             return
+        }
+
+        if let scale = state["scale"] as? Double {
+            let readerScale = scale == 1 ? nil : scale
+            if readerScale != viewModel.state.scale {
+                let request = SetReaderScaleDbRequest(key: viewModel.state.key, libraryId: viewModel.state.library.identifier, scale: readerScale)
+                perform(request: request) { [weak self, weak viewModel] error in
+                    guard let self, let viewModel else { return }
+                    if let error {
+                        DDLogError("HtmlEpubReaderActionHandler: can't store reader scale - \(error)")
+                    } else {
+                        update(viewModel: viewModel, notifyListeners: false) { state in
+                            state.scale = readerScale
+                        }
+                    }
+                }
+            }
         }
 
         let page: String
@@ -898,6 +933,7 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 url: viewModel.state.documentFile.createUrl(),
                 annotationsJson: json,
                 page: page,
+                scale: item.readerScale ?? 1,
                 selectedAnnotationKey: viewModel.state.selectedAnnotationKey
             )
 
@@ -913,6 +949,7 @@ final class HtmlEpubReaderActionHandler: ViewModelActionHandler, BackgroundDbPro
                 state.annotations = annotations
                 state.library = library
                 state.documentData = documentData
+                state.scale = item.readerScale
                 state.itemToken = itemToken
                 state.annotationsToken = annotationsToken
                 state.libraryToken = libraryToken

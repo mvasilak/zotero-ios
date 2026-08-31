@@ -11,6 +11,20 @@ import UIKit
 import RealmSwift
 
 struct HtmlEpubReaderState: ViewModelState {
+    enum ZoomEvent {
+        case zoomIn
+        case zoomOut
+        case zoomReset
+    }
+
+    struct ZoomState: Equatable {
+        let canZoomIn: Bool
+        let canZoomOut: Bool
+        let canZoomReset: Bool
+
+        static let unavailable = ZoomState(canZoomIn: false, canZoomOut: false, canZoomReset: false)
+    }
+
     struct Changes: OptionSet {
         typealias RawValue = UInt32
 
@@ -34,6 +48,8 @@ struct HtmlEpubReaderState: ViewModelState {
         static let searchResults = Changes(rawValue: 1 << 15)
         static let currentOutline = Changes(rawValue: 1 << 16)
         static let pages = Changes(rawValue: 1 << 17)
+        static let zoom = Changes(rawValue: 1 << 18)
+        static let zoomState = Changes(rawValue: 1 << 19)
     }
 
     struct DocumentData {
@@ -46,6 +62,7 @@ struct HtmlEpubReaderState: ViewModelState {
         let url: URL
         let annotationsJson: String
         let page: Page?
+        let scale: Double
         let selectedAnnotationKey: String?
     }
 
@@ -165,6 +182,9 @@ struct HtmlEpubReaderState: ViewModelState {
     var currentPage: PageInfo?
     var pagesCount: Int?
     var interfaceStyle: UIUserInterfaceStyle
+    var zoomEvent: ZoomEvent?
+    var zoomState: ZoomState
+    var scale: Double?
 
     var readerFile: File {
         readerDirectory.copy(withName: "view", ext: "html")
@@ -215,6 +235,8 @@ struct HtmlEpubReaderState: ViewModelState {
         outlines = []
         outlineSearch = ""
         documentSearchResults = []
+        zoomState = .unavailable
+        scale = nil
 
         switch libraryId {
         case .custom:
@@ -233,6 +255,7 @@ struct HtmlEpubReaderState: ViewModelState {
         focusSidebarKey = nil
         focusDocumentKey = nil
         updatedAnnotationKeys = nil
+        zoomEvent = nil
     }
 }
 
