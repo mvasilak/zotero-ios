@@ -306,6 +306,34 @@ struct ItemResponse {
         )
     }
 
+    /// `true` if this response describes an attachment which can store a file (`imported_file`, `imported_url`, `embedded_image`), but the remote copy of the file is missing.
+    /// The remote file is considered available if the response reports both `md5` and `mtime` (submitted by the client after a WebDAV upload, set by the backend for ZFS uploads),
+    /// or if it contains an `enclosure` link. When syncing to WebDAV the file is always reported as missing, since the response can't say anything about the WebDAV server.
+    var isFileAttachmentWithMissingRemoteFile: Bool {
+        guard rawType == ItemTypes.attachment,
+              let linkMode = fields[KeyBaseKeyPair(key: FieldKeys.Item.Attachment.linkMode, baseKey: nil)].flatMap(LinkMode.init(rawValue:))
+        else { return false }
+        switch linkMode {
+        case .importedFile, .importedUrl, .embeddedImage:
+            break
+
+        case .linkedFile, .linkedUrl:
+            // These attachments never store a file remotely, so there's nothing missing.
+            return false
+        }
+        if library.libraryId == .custom(.myLibrary), Defaults.shared.webDavEnabled {
+            return true
+        }
+        guard links?.enclosure == nil else { return false }
+        return !hasValue(forField: FieldKeys.Item.Attachment.md5) || !hasValue(forField: FieldKeys.Item.Attachment.mtime)
+
+        func hasValue(forField key: String) -> Bool {
+            guard let value = fields[KeyBaseKeyPair(key: key, baseKey: nil)] else { return false }
+            // A `null` value in JSON is parsed as a `"<null>"` string.
+            return !value.isEmpty && value != "<null>"
+        }
+    }
+
     /// Parses field values from item data for given type.
     /// - parameter data: Data to parse.
     /// - parameter rawType: Raw item type of parsed item.
