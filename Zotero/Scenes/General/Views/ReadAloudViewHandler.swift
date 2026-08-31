@@ -32,6 +32,15 @@ protocol ReadAloudViewDelegate: AnyObject {
 }
 
 final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
+    /// Values that materially change the menu while it is presented. Transient playback states and the formatted
+    /// remaining-time text are intentionally excluded so they don't dismiss an open submenu.
+    private struct MenuContentState: Equatable {
+        let showsRemainingTime: Bool
+        let showsWarningGroup: Bool
+        let showsContinueWithDowngrade: Bool
+        let showsStopAction: Bool
+    }
+
     let navbarButtonTag = 4
     /// Size of the headphones checkbox capsule itself.
     private let navbarHeadphonesButtonSize: CGFloat = 38
@@ -60,6 +69,7 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
     private var wasPlayingBeforeVoiceChange: Bool
     private weak var activeOverlay: ReadAloudControlsView<Delegate>?
     private weak var highlighterOverlay: ReadAloudHighlighterOverlayView?
+    private var currentMenuContentState: MenuContentState?
     var isHighlighterOverlayVisible: Bool { highlighterOverlay != nil }
     weak var delegate: ReadAloudViewDelegate?
     var menuWillPresent: (() -> Void)?
@@ -123,7 +133,7 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
                     reloadReadAloudButton(isSelected: true, state: state, remainingTime: speechManager.remainingTime.value)
                     showOverlayIfNeeded(forType: currentOverlayType(controller: self), state: state)
                 }
-                updateReadAloudButtonMenu(state: state)
+                updateReadAloudButtonMenu(state: state, remainingTime: speechManager.remainingTime.value)
                 if #available(iOS 17.4, *), case .outOfCredits = state {
                     navbarHeadphonesButtonRef?.performPrimaryAction()
                 }
@@ -143,16 +153,31 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
         DDLogInfo("ReadAloudViewHandler deinitialized")
     }
 
-    private func updateReadAloudButtonMenu(state: SpeechState) {
+    private func updateReadAloudButtonMenu(state: SpeechState, remainingTime: TimeInterval?) {
         guard let button = navbarHeadphonesButtonRef else { return }
         if (!state.isStopped || state.isOutOfCredits) && activeOverlay?.type != .bottomToolbar {
-            if button.menu == nil {
+            let contentState = makeMenuContentState(state: state, remainingTime: remainingTime)
+            if button.menu == nil || contentState != currentMenuContentState {
                 button.menu = createReadAloudMenu()
+                currentMenuContentState = contentState
             }
             button.showsMenuAsPrimaryAction = true
         } else {
             button.menu = nil
             button.showsMenuAsPrimaryAction = false
+            currentMenuContentState = nil
+        }
+
+        func makeMenuContentState(state: SpeechState, remainingTime: TimeInterval?) -> MenuContentState {
+            let showsRemainingTime = remainingTime.flatMap({ RemainingTimeFormatter.shouldDisplay($0) }) ?? false
+            let showsWarningGroup = remainingTime.flatMap({ RemainingTimeFormatter.isWarning($0) }) ?? false
+            let showsContinueWithDowngrade = continueWithDowngradeTitleIfNeeded(remainingTime: remainingTime, voice: speechManager.voice) != nil
+            return MenuContentState(
+                showsRemainingTime: showsRemainingTime,
+                showsWarningGroup: showsWarningGroup,
+                showsContinueWithDowngrade: showsContinueWithDowngrade,
+                showsStopAction: !state.isOutOfCredits
+            )
         }
     }
 
@@ -235,28 +260,12 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
             items.append(UIAction(title: L10n.Speech.addTime, image: nil) { [weak controller] _ in
                 controller?.delegate?.presentReadAloudAddMoreTime()
             })
-            if remainingTime <= 0, let title = continueWithDowngradeTitle(voice: controller.speechManager.voice) {
+            if let title = continueWithDowngradeTitleIfNeeded(remainingTime: remainingTime, voice: controller.speechManager.voice) {
                 items.append(UIAction(title: title, image: nil) { [weak controller] _ in
                     controller?.speechManager.downgradeVoiceTierAndContinue()
                 })
             }
             return UIMenu(title: "", image: nil, options: [.displayInline], children: items)
-        }
-
-        func continueWithDowngradeTitle(voice: SpeechVoice?) -> String? {
-            switch voice {
-            case .remote(let remoteVoice):
-                switch remoteVoice.tier {
-                case .premium:
-                    return L10n.Speech.continueStandard
-
-                case .standard:
-                    return L10n.Speech.continueLocal
-                }
-
-            case .local, .none:
-                return nil
-            }
         }
 
         func createSpeedActions(controller: ReadAloudViewHandler) -> [UIMenuElement] {
@@ -287,6 +296,23 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
             case .remote(let value):
                 return value.label
             }
+        }
+    }
+
+    private func continueWithDowngradeTitleIfNeeded(remainingTime: TimeInterval?, voice: SpeechVoice?) -> String? {
+        guard let remainingTime, remainingTime <= 0 else { return nil }
+        switch voice {
+        case .remote(let remoteVoice):
+            switch remoteVoice.tier {
+            case .premium:
+                return L10n.Speech.continueStandard
+
+            case .standard:
+                return L10n.Speech.continueLocal
+            }
+
+        case .local, .none:
+            return nil
         }
     }
 
@@ -422,7 +448,7 @@ final class ReadAloudViewHandler<Delegate: SpeechManagerDelegate> {
         }
         let state = speechManager.state.value
         showOverlayIfNeeded(forType: type, state: state)
-        updateReadAloudButtonMenu(state: state)
+        updateReadAloudButtonMenu(state: state, remainingTime: speechManager.remainingTime.value)
         repositionHighlighterOverlayIfNeeded()
     }
 
