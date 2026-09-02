@@ -60,6 +60,7 @@ final class CheckboxButton: UIButton {
                 configuration.baseForegroundColor = tintColor
                 button.configuration = configuration
             }
+        }
     }
 
     override func layoutSubviews() {
