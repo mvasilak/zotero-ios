@@ -32,25 +32,15 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 applyFilter(to: &state)
                 state.updatedAnnotationKeys = changedAnnotationKeys?.filter({ state.sortedKeys.contains($0) })
                 state.changes = .annotations
-                let selectionChanged: Bool
-                let newSelectedAnnotationKey: PDFReaderAnnotationKey?
                 if selectionFromDocument, state.selectedAnnotationKey != selectedAnnotationKey {
-                    selectionChanged = true
-                    newSelectedAnnotationKey = selectedAnnotationKey
-                } else if let selectedAnnotationKey = state.selectedAnnotationKey, !state.sortedKeys.contains(selectedAnnotationKey) {
-                    selectionChanged = true
-                    newSelectedAnnotationKey = nil
-                } else {
-                    selectionChanged = false
-                    newSelectedAnnotationKey = nil
-                }
-                if selectionChanged {
                     updateSelection(
-                        to: newSelectedAnnotationKey,
-                        selectionFromDocument: selectionFromDocument,
+                        to: selectedAnnotationKey,
+                        selectionFromDocument: true,
                         selectionFromSidebar: false,
                         state: &state
                     )
+                } else {
+                    removeSelectionIfNeeded(state: &state, selectionFromDocument: selectionFromDocument)
                 }
 
                 // If sidebar editing is enabled and there are no results, disable it.
@@ -132,6 +122,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.searchTerm = normalizedTerm
                 applyFilter(to: &state)
                 state.changes = [.annotations, .filter]
+                removeSelectionIfNeeded(state: &state, selectionFromDocument: false)
             }
 
         case .setFilter(let filter):
@@ -140,6 +131,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.filter = filter
                 applyFilter(to: &state)
                 state.changes = [.annotations, .filter]
+                removeSelectionIfNeeded(state: &state, selectionFromDocument: false)
             }
 
         case .setLibrary(let library):
@@ -278,6 +270,17 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         if selectionChanged && state.selectedAnnotationCommentActive {
             state.selectedAnnotationCommentActive = false
             state.changes.insert(.activeComment)
+        }
+    }
+
+    private func removeSelectionIfNeeded(state: inout PDFAnnotationsState, selectionFromDocument: Bool) {
+        if let selectedAnnotationKey = state.selectedAnnotationKey, !state.sortedKeys.contains(selectedAnnotationKey) {
+            updateSelection(
+                to: nil,
+                selectionFromDocument: selectionFromDocument,
+                selectionFromSidebar: !selectionFromDocument,
+                state: &state
+            )
         }
     }
 
