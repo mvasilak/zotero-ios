@@ -299,7 +299,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             if state.selectedAnnotationsDuringEditing.count == 1 {
                 state.mergingEnabled = false
             } else {
-                state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+                state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, state: state)
             }
 
             state.changes = .sidebarEditingSelection
@@ -320,7 +320,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 }
             } else {
                 // Check whether deletion state changed after removing this annotation.
-                let deletionEnabled = selectedAnnotationsDeletable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+                let deletionEnabled = selectedAnnotationsDeletable(selected: state.selectedAnnotationsDuringEditing, state: state)
                 if state.deletionEnabled != deletionEnabled {
                     state.deletionEnabled = deletionEnabled
                     state.changes = .sidebarEditingSelection
@@ -331,21 +331,23 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                         state.changes = .sidebarEditingSelection
                     }
                 } else {
-                    state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, in: viewModel)
+                    state.mergingEnabled = selectedAnnotationsMergeable(selected: state.selectedAnnotationsDuringEditing, state: state)
                     state.changes = .sidebarEditingSelection
                 }
             }
         }
-
-        func selectedAnnotationsDeletable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFAnnotationsActionHandler>) -> Bool {
-            return !selected.contains(where: { key in
-                guard let annotation = viewModel.state.annotation(for: key) else { return false }
-                return !annotation.isSyncable || annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library) == .notEditable
-            })
-        }
     }
 
-    private func selectedAnnotationsMergeable(selected: Set<PDFReaderAnnotationKey>, in viewModel: ViewModel<PDFAnnotationsActionHandler>) -> Bool {
+    private func selectedAnnotationsDeletable(selected: Set<PDFReaderAnnotationKey>, state: PDFAnnotationsState) -> Bool {
+        guard !selected.isEmpty else { return false }
+        return selected.allSatisfy({ key in
+            guard let annotation = state.annotation(for: key) else { return false }
+            return annotation.isSyncable && annotation.editability(currentUserId: state.userId, library: state.library) != .notEditable
+        })
+    }
+
+    private func selectedAnnotationsMergeable(selected: Set<PDFReaderAnnotationKey>, state: PDFAnnotationsState) -> Bool {
+        guard selected.count > 1 else { return false }
         var page: Int?
         var type: AnnotationType?
         var color: String?
@@ -372,7 +374,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
 
         for key in selected {
-            guard let annotation = viewModel.state.annotation(for: key) else { continue }
+            guard let annotation = state.annotation(for: key) else { return false }
             guard annotation.isSyncable else { return false }
 
             if let page = page {
