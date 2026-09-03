@@ -742,16 +742,11 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             state.selectedAnnotationCommentActive = false
         }
 
+        state.selectedAnnotationKey = key
         state.selectionFromDocument = didSelectInDocument
         state.changes.insert(.selection)
 
-        guard let key else {
-            state.selectedAnnotationKey = nil
-            return
-        }
-
-        state.selectedAnnotationKey = key
-
+        guard let key else { return }
         if !didSelectInDocument, let annotation = state.annotation(for: key) {
             state.focusDocumentLocation = (annotation.page, annotation.boundingBox(boundingBoxConverter: state.document))
         }
