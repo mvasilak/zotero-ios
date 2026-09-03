@@ -165,7 +165,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
 
     private func updateSortedKeys(in state: inout PDFAnnotationsState) {
         let sortedKeys = createSortedKeys(fromDatabaseAnnotations: state.databaseAnnotations, documentAnnotationKeys: state.documentAnnotationKeys)
-        if sortedKeys != state.sortedKeys {
+        if sortedKeys != state.snapshotKeys ?? state.sortedKeys {
             state.sortedKeys = sortedKeys
             state.snapshotKeys = nil
         }
