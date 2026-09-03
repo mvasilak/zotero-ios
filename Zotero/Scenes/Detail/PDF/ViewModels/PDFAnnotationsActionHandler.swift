@@ -98,13 +98,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 state.changes.insert(.sidebarEditing)
             }
 
-        case .setSidebarEditingSelection(let deletionEnabled, let mergingEnabled):
-            update(viewModel: viewModel) { state in
-                state.deletionEnabled = deletionEnabled
-                state.mergingEnabled = mergingEnabled
-                state.changes = .sidebarEditingSelection
-            }
-
         case .selectAnnotationDuringEditing(let key):
             selectDuringEditing(key: key, in: viewModel)
 
