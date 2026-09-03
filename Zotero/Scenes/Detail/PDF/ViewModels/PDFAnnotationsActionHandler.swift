@@ -42,6 +42,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 } else {
                     removeSelectionIfNeeded(state: &state, selectionFromDocument: selectionFromDocument)
                 }
+                updateEditingSelectionIfNeeded(state: &state)
 
                 // If sidebar editing is enabled and there are no results, disable it.
                 if state.sidebarEditingEnabled, (state.snapshotKeys ?? state.sortedKeys).isEmpty {
@@ -123,6 +124,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 applyFilter(to: &state)
                 state.changes = [.annotations, .filter]
                 removeSelectionIfNeeded(state: &state, selectionFromDocument: false)
+                updateEditingSelectionIfNeeded(state: &state)
             }
 
         case .setFilter(let filter):
@@ -132,6 +134,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 applyFilter(to: &state)
                 state.changes = [.annotations, .filter]
                 removeSelectionIfNeeded(state: &state, selectionFromDocument: false)
+                updateEditingSelectionIfNeeded(state: &state)
             }
 
         case .setLibrary(let library):
@@ -281,6 +284,20 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 selectionFromSidebar: !selectionFromDocument,
                 state: &state
             )
+        }
+    }
+
+    private func updateEditingSelectionIfNeeded(state: inout PDFAnnotationsState) {
+        guard state.sidebarEditingEnabled else { return }
+        let selectedAnnotations = state.selectedAnnotationsDuringEditing.intersection(Set(state.sortedKeys))
+        // Recheck eligibility even if the keys are unchanged, since annotation properties may have changed.
+        let deletionEnabled = selectedAnnotationsDeletable(selected: selectedAnnotations, state: state)
+        let mergingEnabled = selectedAnnotationsMergeable(selected: selectedAnnotations, state: state)
+        if selectedAnnotations != state.selectedAnnotationsDuringEditing || deletionEnabled != state.deletionEnabled || mergingEnabled != state.mergingEnabled {
+            state.selectedAnnotationsDuringEditing = selectedAnnotations
+            state.deletionEnabled = deletionEnabled
+            state.mergingEnabled = mergingEnabled
+            state.changes.insert(.sidebarEditingSelection)
         }
     }
 
