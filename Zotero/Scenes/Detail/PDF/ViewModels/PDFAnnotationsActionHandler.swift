@@ -9,6 +9,7 @@
 import Foundation
 
 import CocoaLumberjackSwift
+import OrderedCollections
 import RealmSwift
 
 final class PDFAnnotationsActionHandler: ViewModelActionHandler {
@@ -169,7 +170,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             state.snapshotKeys = nil
         }
 
-        func createSortedKeys(fromDatabaseAnnotations databaseAnnotations: Results<RItem>?, documentAnnotationKeys: [PDFReaderAnnotationKey]) -> [PDFReaderAnnotationKey] {
+        func createSortedKeys(fromDatabaseAnnotations databaseAnnotations: Results<RItem>?, documentAnnotationKeys: [PDFReaderAnnotationKey]) -> OrderedSet<PDFReaderAnnotationKey> {
             var keys: [PDFReaderAnnotationKey] = []
             if let databaseAnnotations {
                 for item in databaseAnnotations {
@@ -187,7 +188,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 }
                 return lhs.type == .database && rhs.type == .document
             })
-            return keys
+            return OrderedSet(keys)
 
             func isValid(databaseAnnotation: PDFDatabaseAnnotation) -> Bool {
                 guard databaseAnnotation._page != nil else { return false }
@@ -252,7 +253,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
         state.sortedKeys = filteredKeys(from: snapshotKeys, state: state)
 
-        func filteredKeys(from snapshotKeys: [PDFReaderAnnotationKey], state: PDFAnnotationsState) -> [PDFReaderAnnotationKey] {
+        func filteredKeys(from snapshotKeys: OrderedSet<PDFReaderAnnotationKey>, state: PDFAnnotationsState) -> OrderedSet<PDFReaderAnnotationKey> {
             return snapshotKeys.filter({ key in
                 guard let annotation = state.annotation(for: key) else { return false }
                 return annotation.matches(term: state.searchTerm, filter: state.filter, displayName: state.displayName, username: state.username)
@@ -289,7 +290,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
 
     private func updateEditingSelectionIfNeeded(state: inout PDFAnnotationsState) {
         guard state.sidebarEditingEnabled else { return }
-        let selectedAnnotations = state.selectedAnnotationsDuringEditing.intersection(Set(state.sortedKeys))
+        let selectedAnnotations = state.selectedAnnotationsDuringEditing.filter({ state.sortedKeys.contains($0) })
         // Recheck eligibility even if the keys are unchanged, since annotation properties may have changed.
         let deletionEnabled = selectedAnnotationsDeletable(selected: selectedAnnotations, state: state)
         let mergingEnabled = selectedAnnotationsMergeable(selected: selectedAnnotations, state: state)
