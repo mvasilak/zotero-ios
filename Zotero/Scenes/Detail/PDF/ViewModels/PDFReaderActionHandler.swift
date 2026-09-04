@@ -2106,6 +2106,7 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
             if let blendMode {
                 pdfAnnotation.blendMode = blendMode
             }
+            pdfAnnotation.baseColor = hexColor
 
             changes.insert(.color)
         }
