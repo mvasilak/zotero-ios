@@ -2033,6 +2033,8 @@ final class PDFReaderActionHandler: ViewModelActionHandler, BackgroundDbProcessi
                 notify: false
             )
         }
+        let filterAffectedPageIndices = Set(updatedPdfAnnotations.map({ $0.0.pageIndex }) + insertedPdfAnnotations.map({ $0.pageIndex }))
+        annotationProvider?.refreshFilter(on: filterAffectedPageIndices)
         if !affectedThumbnailPages.isEmpty {
             pdfThumbnailController.delete(pages: affectedThumbnailPages, forKey: viewModel.state.key, libraryId: viewModel.state.library.identifier)
         }
