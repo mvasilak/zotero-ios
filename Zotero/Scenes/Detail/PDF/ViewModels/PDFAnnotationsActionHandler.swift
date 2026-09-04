@@ -37,7 +37,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                     updateSelection(
                         to: selectedAnnotationKey,
                         selectionFromDocument: true,
-                        selectionFromSidebar: false,
                         state: &state
                     )
                 } else {
@@ -60,7 +59,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
                 updateSelection(
                     to: selectedAnnotationKey,
                     selectionFromDocument: selectionFromDocument,
-                    selectionFromSidebar: !selectionFromDocument,
                     state: &state
                 )
             }
@@ -261,7 +259,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
     }
 
-    private func updateSelection(to selectedAnnotationKey: PDFReaderAnnotationKey?, selectionFromDocument: Bool, selectionFromSidebar: Bool, state: inout PDFAnnotationsState) {
+    private func updateSelection(to selectedAnnotationKey: PDFReaderAnnotationKey?, selectionFromDocument: Bool, state: inout PDFAnnotationsState) {
         let selectionChanged = state.selectedAnnotationKey != selectedAnnotationKey
         if selectionChanged {
             state.updatedAnnotationKeys = state.updatedAnnotationKeys ?? []
@@ -269,7 +267,7 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
         }
         state.selectedAnnotationKey = selectedAnnotationKey
         state.focusOnSelectionIfNeeded = selectionFromDocument && (selectedAnnotationKey != nil)
-        state.selectionFromSidebar = selectionFromSidebar
+        state.selectionFromSidebar = !selectionFromDocument
         state.changes.insert(.selection)
         if selectionChanged && state.selectedAnnotationCommentActive {
             state.selectedAnnotationCommentActive = false
@@ -282,7 +280,6 @@ final class PDFAnnotationsActionHandler: ViewModelActionHandler {
             updateSelection(
                 to: nil,
                 selectionFromDocument: selectionFromDocument,
-                selectionFromSidebar: !selectionFromDocument,
                 state: &state
             )
         }
