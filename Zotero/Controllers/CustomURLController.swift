@@ -173,6 +173,9 @@ final class CustomURLController {
                 return nil
             }
 
+            // zotero://open-pdf URLs use 1-based physical page numbers, while the reader uses 0-based page indices.
+            page = page.flatMap { $0 > 0 ? $0 - 1 : nil }
+
             return (key, libraryId, page, annotation)
         }
     }
